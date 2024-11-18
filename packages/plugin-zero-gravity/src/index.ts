@@ -54,6 +54,13 @@ function isStorageContent(
 const zgStorage: Action = {
     name: "ZG_STORAGE",
     similes: [
+        "UPLOAD_FILE_TO_ZG",
+        "STORE_FILE_ON_ZG",
+        "SAVE_FILE_TO_ZG",
+        "UPLOAD_TO_ZERO_GRAVITY",
+        "STORE_ON_ZERO_GRAVITY",
+        "SHARE_FILE_ON_ZG",
+        "PUBLISH_FILE_TO_ZG"
     ],
     description: "Store data using 0G protocol",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
