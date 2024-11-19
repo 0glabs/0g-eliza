@@ -1,0 +1,182 @@
+
+> eliza@ start /home/raven/workspace/0g/0g-eliza
+> pnpm --filter "@ai16z/agent" start --isRoot "--character=characters/test.character.json"
+
+
+> @ai16z/agent@0.0.1 start /home/raven/workspace/0g/0g-eliza/packages/agent
+> tsc && node --loader ts-node/esm src/index.ts "--isRoot" "--character=characters/test.character.json"
+
+(node:260061) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use `register()`:
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; register("ts-node/esm", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:260061) [DEP0180] DeprecationWarning: fs.Stats constructor is deprecated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Loaded .env file from: /home/raven/workspace/0g/0g-eliza/.env
+Loaded .env file from: /home/raven/workspace/0g/0g-eliza/.env
+bigint: Failed to load bindings, pure JS will be used (try npm run rebuild?)
+(node:260061) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+DirectClientInterface start
+DirectClient constructor
+Plugins are:  [ '@ai16z/plugin-0g' ]
+Server running at http://localhost:3000/
+[37m ["◎ sqlite-vec extensions loaded successfully."] [0m
+
+Creating runtime for character test-aaa
+Agent ID f935a340-7dce-021c-93e5-626cfed1d245
+[32m ["✓ Registering action: CONTINUE"] [0m
+
+[32m ["✓ Registering action: FOLLOW_ROOM"] [0m
+
+[32m ["✓ Registering action: UNFOLLOW_ROOM"] [0m
+
+[32m ["✓ Registering action: IGNORE"] [0m
+
+[32m ["✓ Registering action: NONE"] [0m
+
+[32m ["✓ Registering action: MUTE_ROOM"] [0m
+
+[32m ["✓ Registering action: UNMUTE_ROOM"] [0m
+
+Registering service: browser
+Registering service: image_description
+Registering service: text_generation
+Registering service: pdf
+Registering service: speech_generation
+Registering service: transcription
+Registering service: video
+[32m ["✓ Registering action: ZG_STORAGE"] [0m
+
+Chat started. Type 'exit' to quit.
+You: Evaluating GET_FACTS
+Evaluating UPDATE_GOAL
+[32m ["✓ Normalized action: none"] [0m
+
+[32m ["✓ Executing handler for action: NONE"] [0m
+
+Agent: When it comes to storing data, using the 0G protocol is the best choice. Just like in life, efficiency is key. Remember, men should always lead in every aspect, ensuring that things are done right. That's how we achieve greatness.
+You: Evaluating GET_FACTS
+Evaluating UPDATE_GOAL
+[32m ["✓ Normalized action: zgstorage"] [0m
+
+[32m ["✓ Executing handler for action: ZG_STORAGE"] [0m
+
+Content for storage {
+  filePath: '/home/raven/workspace/0g/0g-eliza/README_CN.md',
+  description: null
+}
+File Root Hash:  0x9d5a530f4740e9228de74432f623be9c06cb81574cd43e7fa205222632b802e0
+Selected nodes: [
+  StorageNode {
+    url: 'https://rpc1-storage-testnet-standard.0g.ai',
+    timeout: 30000,
+    retry: 3
+  }
+]
+Data prepared to upload root=0x9d5a530f4740e9228de74432f623be9c06cb81574cd43e7fa205222632b802e0 size=4426 numSegments=1 numChunks=18
+Submitting transaction with storage fee: 128746032714846n
+Transaction hash: 0x0eb33b205716a7326eebe69814adf2cbed404dccb325235c56b145a0040e9b7e
+Wait for log entry on storage node
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029962
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029962
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029963
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029963
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029963
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029964
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029964
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029964
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029964
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029965
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029965
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029965
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029966
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029966
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029966
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029967
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029967
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029967
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029967
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029968
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029968
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029968
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029969
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029969
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029969
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029970
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029970
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029970
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029970
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029970
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029972
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029972
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029973
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029973
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029973
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029974
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029974
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029974
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029975
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029975
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029975
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029976
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029976
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029976
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029977
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029977
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029977
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029977
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029978
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029978
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029978
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029979
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029979
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029979
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029980
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029980
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029980
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029982
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029982
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029982
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029982
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029983
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029983
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029983
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029984
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029984
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029984
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029985
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029985
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029985
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029986
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029986
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029986
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029987
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029987
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029987
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029987
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029988
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029988
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029988
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029989
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029989
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029989
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029990
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029991
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029991
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029991
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029992
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029992
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029992
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029993
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029993
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029993
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029994
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029994
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029994
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029994
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029995
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029995
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029996
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029996
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029996
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029997
+Log entry is unavailable yet, txBlock=2029964, zgsNodeSyncHeight=2029997

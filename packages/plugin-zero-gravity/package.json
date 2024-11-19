@@ -5,7 +5,9 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
+        "@0glabs/0g-ts-sdk": "^0.2.1",
         "@ai16z/eliza": "workspace:*",
+        "ethers": "^6.13.4",
         "tsup": "^8.3.5"
     },
     "scripts": {

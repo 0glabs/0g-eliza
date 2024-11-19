@@ -6,13 +6,12 @@ import {
     Plugin,
     State,
     ModelClass,
-    Content
+    Content,
 } from "@ai16z/eliza";
-import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
-import { ethers } from 'ethers';
+import { ZgFile, Indexer, getFlowContract } from "@0glabs/0g-ts-sdk";
+import { ethers } from "ethers";
 import { composeContext } from "@ai16z/eliza";
 import { generateObject } from "@ai16z/eliza";
-
 
 const storageTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
 
@@ -46,9 +45,7 @@ function isStorageContent(
     content: any
 ): content is StorageContent {
     console.log("Content for storage", content);
-    return (
-        typeof content.filePath === "string"
-    );
+    return typeof content.filePath === "string";
 }
 
 const zgStorage: Action = {
@@ -60,7 +57,7 @@ const zgStorage: Action = {
         "UPLOAD_TO_ZERO_GRAVITY",
         "STORE_ON_ZERO_GRAVITY",
         "SHARE_FILE_ON_ZG",
-        "PUBLISH_FILE_TO_ZG"
+        "PUBLISH_FILE_TO_ZG",
     ],
     description: "Store data using 0G protocol",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
@@ -112,59 +109,68 @@ const zgStorage: Action = {
             const zgChainUrl = runtime.getSetting("ZEROG_CHAIN_URL");
             const zgPrivateKey = runtime.getSetting("ZEROG_PRIVATE_KEY");
             const zgIndexerUrl = runtime.getSetting("ZEROG_INDEXER_URL");
+            const zgFlowAddress = runtime.getSetting("ZEROG_FLOW_ADDRESS");
             const filePath = content.filePath;
-
-            const file = await ZgFile.fromFilePath(filePath);
-            var [tree, err] = await file.merkleTree();
-            if (err === null) {
-                console.log("File Root Hash: ", tree.rootHash());
-            } else {
-                console.log("Error getting file root hash: ", err);
-                return false;
-            }
-            await file.close();
 
             const provider = new ethers.JsonRpcProvider(zgChainUrl);
             const signer = new ethers.Wallet(zgPrivateKey, provider);
+            const flowContract = getFlowContract(zgFlowAddress, signer);
             const indexer = new Indexer(zgIndexerUrl);
 
-            var [tx, err] = await indexer.upload(file, zgChainUrl, signer);
+            const file = await ZgFile.fromFilePath(filePath);
+            var [tree, err] = await file.merkleTree();
+            if (err) {
+                console.log("Error getting file root hash: ", err);
+                return false;
+            }
+            console.log("File Root Hash: ", tree.rootHash());
+
+            var [tx, err] = await indexer.upload(
+                file,
+                0,
+                zgChainUrl,
+                flowContract
+            );
             if (err === null) {
                 console.log("File uploaded successfully, tx: ", tx);
-                } else {
+            } else {
                 console.log("Error uploading file: ", err);
                 return false;
             }
-
+            await file.close();
         } catch (error) {
             console.error("Error getting settings for ZG storage:", error);
         }
     },
-    examples: [[
-        {
-            user: "{{user1}}",
-            content: { 
-                text: "upload my resume.pdf file",
-                action: "ZG_STORAGE"
-            }
-        }
-    ], [
-        {
-            user: "{{user1}}", 
-            content: { 
-                text: "can you help me upload this document.docx?",
-                action: "ZG_STORAGE"
-            }
-        }
-    ], [
-        {
-            user: "{{user1}}", 
-            content: { 
-                text: "I need to upload an image file image.png",
-                action: "ZG_STORAGE"
-            }
-        }
-    ]],
+    examples: [
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "upload my resume.pdf file",
+                    action: "ZG_STORAGE",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "can you help me upload this document.docx?",
+                    action: "ZG_STORAGE",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "I need to upload an image file image.png",
+                    action: "ZG_STORAGE",
+                },
+            },
+        ],
+    ],
 } as Action;
 
 export const zgStoragePlugin: Plugin = {
