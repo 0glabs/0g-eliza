@@ -1,6 +1,7 @@
 import { IAgentRuntime, Memory, Provider, State } from "@ai16z/eliza";
 import { Connection, PublicKey } from "@solana/web3.js";
 import BigNumber from "bignumber.js";
+import NodeCache from "node-cache";
 
 // Provider configuration
 const PROVIDER_CONFIG = {
@@ -8,9 +9,10 @@ const PROVIDER_CONFIG = {
     MAX_RETRIES: 3,
     RETRY_DELAY: 2000,
     DEFAULT_RPC: "https://api.mainnet-beta.solana.com",
+    GRAPHQL_ENDPOINT: "https://graph.codex.io/graphql",
     TOKEN_ADDRESSES: {
         SOL: "So11111111111111111111111111111111111111112",
-        BTC: "qfnqNqs3nCAHjnyCgLRDbBtq4p2MtHZxw8YjSyYhPoL",
+        BTC: "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh",
         ETH: "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs",
     },
 };
@@ -33,7 +35,7 @@ interface WalletPortfolio {
     items: Array<Item>;
 }
 
-interface BirdEyePriceData {
+interface _BirdEyePriceData {
     data: {
         [key: string]: {
             price: number;
@@ -49,10 +51,14 @@ interface Prices {
 }
 
 export class WalletProvider {
+    private cache: NodeCache;
+
     constructor(
         private connection: Connection,
         private walletPublicKey: PublicKey
-    ) {}
+    ) {
+        this.cache = new NodeCache({ stdTTL: 300 }); // Cache TTL set to 5 minutes
+    }
 
     private async fetchWithRetry(
         runtime,
@@ -103,6 +109,15 @@ export class WalletProvider {
 
     async fetchPortfolioValue(runtime): Promise<WalletPortfolio> {
         try {
+            const cacheKey = `portfolio-${this.walletPublicKey.toBase58()}`;
+            const cachedValue = this.cache.get<WalletPortfolio>(cacheKey);
+
+            if (cachedValue) {
+                console.log("Cache hit for fetchPortfolioValue");
+                return cachedValue;
+            }
+            console.log("Cache miss for fetchPortfolioValue");
+
             const walletData = await this.fetchWithRetry(
                 runtime,
                 `${PROVIDER_CONFIG.BIRDEYE_API}/v1/wallet/token_list?wallet=${this.walletPublicKey.toBase58()}`
@@ -130,8 +145,7 @@ export class WalletProvider {
             }));
 
             const totalSol = totalUsd.div(solPriceInUSD);
-
-            return {
+            const portfolio = {
                 totalUsd: totalUsd.toString(),
                 totalSol: totalSol.toFixed(6),
                 items: items.sort((a, b) =>
@@ -140,6 +154,105 @@ export class WalletProvider {
                         .toNumber()
                 ),
             };
+            this.cache.set(cacheKey, portfolio);
+            return portfolio;
+        } catch (error) {
+            console.error("Error fetching portfolio:", error);
+            throw error;
+        }
+    }
+
+    async fetchPortfolioValueCodex(runtime): Promise<WalletPortfolio> {
+        try {
+            const cacheKey = `portfolio-${this.walletPublicKey.toBase58()}`;
+            const cachedValue = await this.cache.get<WalletPortfolio>(cacheKey);
+
+            if (cachedValue) {
+                console.log("Cache hit for fetchPortfolioValue");
+                return cachedValue;
+            }
+            console.log("Cache miss for fetchPortfolioValue");
+
+            const query = `
+              query Balances($walletId: String!, $cursor: String) {
+                balances(input: { walletId: $walletId, cursor: $cursor }) {
+                  cursor
+                  items {
+                    walletId
+                    tokenId
+                    balance
+                    shiftedBalance
+                  }
+                }
+              }
+            `;
+
+            const variables = {
+                walletId: `${this.walletPublicKey.toBase58()}:${1399811149}`,
+                cursor: null,
+            };
+
+            const response = await fetch(PROVIDER_CONFIG.GRAPHQL_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization:
+                        runtime.getSetting("CODEX_API_KEY", "") || "",
+                },
+                body: JSON.stringify({
+                    query,
+                    variables,
+                }),
+            }).then((res) => res.json());
+
+            const data = response.data?.data?.balances?.items;
+
+            if (!data || data.length === 0) {
+                console.error("No portfolio data available", data);
+                throw new Error("No portfolio data available");
+            }
+
+            // Fetch token prices
+            const prices = await this.fetchPrices(runtime);
+            const solPriceInUSD = new BigNumber(prices.solana.usd.toString());
+
+            // Reformat items
+            const items: Item[] = data.map((item: any) => {
+                return {
+                    name: "Unknown",
+                    address: item.tokenId.split(":")[0],
+                    symbol: item.tokenId.split(":")[0],
+                    decimals: 6,
+                    balance: item.balance,
+                    uiAmount: item.shiftedBalance.toString(),
+                    priceUsd: "",
+                    valueUsd: "",
+                    valueSol: "",
+                };
+            });
+
+            // Calculate total portfolio value
+            const totalUsd = items.reduce(
+                (sum, item) => sum.plus(new BigNumber(item.valueUsd)),
+                new BigNumber(0)
+            );
+
+            const totalSol = totalUsd.div(solPriceInUSD);
+
+            const portfolio: WalletPortfolio = {
+                totalUsd: totalUsd.toFixed(6),
+                totalSol: totalSol.toFixed(6),
+                items: items.sort((a, b) =>
+                    new BigNumber(b.valueUsd)
+                        .minus(new BigNumber(a.valueUsd))
+                        .toNumber()
+                ),
+            };
+
+            // Cache the portfolio for future requests
+            await this.cache.set(cacheKey, portfolio, 60 * 1000); // Cache for 1 minute
+
+            return portfolio;
         } catch (error) {
             console.error("Error fetching portfolio:", error);
             throw error;
@@ -148,6 +261,15 @@ export class WalletProvider {
 
     async fetchPrices(runtime): Promise<Prices> {
         try {
+            const cacheKey = "prices";
+            const cachedValue = this.cache.get<Prices>(cacheKey);
+
+            if (cachedValue) {
+                console.log("Cache hit for fetchPrices");
+                return cachedValue;
+            }
+            console.log("Cache miss for fetchPrices");
+
             const { SOL, BTC, ETH } = PROVIDER_CONFIG.TOKEN_ADDRESSES;
             const tokens = [SOL, BTC, ETH];
             const prices: Prices = {
@@ -181,6 +303,7 @@ export class WalletProvider {
                 }
             }
 
+            this.cache.set(cacheKey, prices);
             return prices;
         } catch (error) {
             console.error("Error fetching prices:", error);
@@ -245,43 +368,29 @@ const walletProvider: Provider = {
         runtime: IAgentRuntime,
         _message: Memory,
         _state?: State
-    ): Promise<string> => {
+    ): Promise<string | null> => {
         try {
-            // Validate wallet configuration
-            if (!runtime.getSetting("WALLET_PUBLIC_KEY")) {
+            const publicKey = runtime.getSetting("SOLANA_PUBLIC_KEY");
+            if (!publicKey) {
                 console.error(
-                    "Wallet public key is not configured in settings"
+                    "SOLANA_PUBLIC_KEY not configured, skipping wallet injection"
                 );
                 return "";
             }
 
-            // Validate public key format before creating instance
-            if (
-                typeof runtime.getSetting("WALLET_PUBLIC_KEY") !== "string" ||
-                runtime.getSetting("WALLET_PUBLIC_KEY").trim() === ""
-            ) {
-                console.error("Invalid wallet public key format");
-                return "";
-            }
+            const connection = new Connection(
+                runtime.getSetting("RPC_URL") || PROVIDER_CONFIG.DEFAULT_RPC
+            );
 
-            let publicKey: PublicKey;
-            try {
-                publicKey = new PublicKey(
-                    runtime.getSetting("WALLET_PUBLIC_KEY")
-                );
-            } catch (error) {
-                console.error("Error creating PublicKey:", error);
-                return "";
-            }
+            const provider = new WalletProvider(
+                connection,
+                new PublicKey(publicKey)
+            );
 
-            const connection = new Connection(PROVIDER_CONFIG.DEFAULT_RPC);
-            const provider = new WalletProvider(connection, publicKey);
-
-            const porfolio = await provider.getFormattedPortfolio(runtime);
-            return porfolio;
+            return await provider.getFormattedPortfolio(runtime);
         } catch (error) {
-            console.error("Error in wallet provider:", error.message);
-            return `Failed to fetch wallet information: ${error instanceof Error ? error.message : "Unknown error"}`;
+            console.error("Error in wallet provider:", error);
+            return null;
         }
     },
 };

@@ -8,7 +8,7 @@ sidebar_position: 2
 
 Before getting started with Eliza, ensure you have:
 
-- [Node.js 23.1.0](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+- [Node.js 23.3.0](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [pnpm](https://pnpm.io/installation)
 - Git for version control
 - A code editor ([VS Code](https://code.visualstudio.com/) or [VSCodium](https://vscodium.com) recommended)
@@ -44,6 +44,12 @@ Before getting started with Eliza, ensure you have:
    pnpm install
    ```
 
+   Build the local libraries
+
+   ```bash
+   pnpm build
+   ```
+
 2. **Configure Environment**
 
    Copy example environment file
@@ -60,6 +66,7 @@ Before getting started with Eliza, ensure you have:
    DISCORD_API_TOKEN=      # Bot token
    HEURIST_API_KEY=       # Heurist API key for LLM and image generation
    OPENAI_API_KEY=        # OpenAI API key
+   GROK_API_KEY=          # Grok API key
    ELEVENLABS_XI_API_KEY= # API key from elevenlabs (for voice)
    ```
 
@@ -67,9 +74,9 @@ Before getting started with Eliza, ensure you have:
 
 Eliza supports multiple AI models:
 
-- **Heurist**: Set `modelProvider: "HEURIST"` in your character file
-  - LLM: Uses Llama models (more available LLM models [here](https://heurist.mintlify.app/developer/supported-models))
-  - Image Generation: Uses PepeXL model (more info of available models [here](https://heurist.mintlify.app/developer/image-generation-api))
+- **Heurist**: Set `modelProvider: "heurist"` in your character file. Most models are uncensored.
+  - LLM: Select available LLMs [here](https://docs.heurist.ai/dev-guide/supported-models#large-language-models-llms) and configure `SMALL_HEURIST_LANGUAGE_MODEL`,`MEDIUM_HEURIST_LANGUAGE_MODEL`,`LARGE_HEURIST_LANGUAGE_MODEL`
+  - Image Generation: Select available Stable Diffusion or Flux models [here](https://docs.heurist.ai/dev-guide/supported-models#image-generation-models) and configure `HEURIST_IMAGE_MODEL` (default is FLUX.1-dev)
 - **Llama**: Set `XAI_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo`
 - **Grok**: Set `XAI_MODEL=grok-beta`
 - **OpenAI**: Set `XAI_MODEL=gpt-4o-mini` or `gpt-4o`
@@ -135,6 +142,18 @@ TWITTER_EMAIL=    # Account email
 TWITTER_COOKIES=  # Account cookies (auth_token and CT0)
 ```
 
+Example for TWITTER_COOKIES
+
+The TWITTER_COOKIES variable should be a JSON string containing the necessary cookies. You can find these cookies in your web browser's developer tools. Here is an example format:
+
+```bash
+TWITTER_COOKIES='[{"key":"auth_token","value":"your token","domain":".twitter.com"},
+  {"key":"ct0","value":"your ct0","domain":".twitter.com"},
+  {"key":"guest_id","value":"your guest_id","domain":".twitter.com"}]'
+```
+
+Using TWITTER_COOKIES makes providing TWITTER_PASSWORD and TWITTER_EMAIL unnecessary. TWITTER_USERNAME is still required.
+
 ### Telegram Bot
 
 1. Create a bot
@@ -174,7 +193,7 @@ pnpm start --characters="characters/trump.character.json,characters/tate.charact
 
 1. **Node.js Version**
 
-   - Ensure Node.js 23.1.0 is installed
+   - Ensure Node.js 23.3.0 is installed
    - Use `node -v` to check version
    - Consider using [nvm](https://github.com/nvm-sh/nvm) to manage Node versions
 
@@ -246,7 +265,7 @@ pnpm start --characters="characters/trump.character.json,characters/tate.charact
    If that doesn't work, try clearing your node_modules in the root folder
 
    ```bash
-   rm -fr node_modules; rm pnpm-lock.yaml
+   rm -fr node_modules; pnpm store prune
    ```
 
    Then reinstall the requirements
