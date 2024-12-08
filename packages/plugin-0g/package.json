@@ -5,10 +5,11 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "dependencies": {
+        "@0glabs/0g-serving-broker": "0.1.0",
+        "@0glabs/0g-ts-sdk": "0.2.3",
         "@ai16z/eliza": "workspace:*",
-        "tsup": "8.3.5",
-        "@0glabs/0g-ts-sdk": "0.2.1",
-        "ethers": "6.13.4"
+        "ethers": "6.13.4",
+        "tsup": "8.3.5"
     },
     "scripts": {
         "build": "tsup --format esm --dts",

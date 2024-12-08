@@ -5,28 +5,17 @@ import {
     Memory,
     State,
     ModelClass,
-    Content,
     ActionExample,
     generateObjectV2,
+    generateObject,
 } from "@ai16z/eliza";
-import { Indexer, ZgFile, getFlowContract } from "@0glabs/0g-ts-sdk";
+import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
 import { ethers } from "ethers";
-import { composeContext } from "@ai16z/eliza";
+import { composeContext, settings } from "@ai16z/eliza";
 import { promises as fs } from "fs";
 
 import { uploadTemplate } from "../templates/upload";
-
-export interface UploadContent extends Content {
-    filePath: string;
-}
-
-function isUploadContent(
-    _runtime: IAgentRuntime,
-    content: any
-): content is UploadContent {
-    console.log("Content for upload", content);
-    return typeof content.filePath === "string";
-}
+import { UploadSchema, isUploadContent } from "../types";
 
 export const zgUpload: Action = {
     name: "ZG_UPLOAD",
@@ -41,11 +30,8 @@ export const zgUpload: Action = {
     ],
     description: "Store data using 0G protocol",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        const zgIndexerRpc = !!runtime.getSetting("ZEROG_INDEXER_RPC");
-        const zgEvmRpc = !!runtime.getSetting("ZEROG_EVM_RPC");
-        const zgPrivateKey = !!runtime.getSetting("ZEROG_PRIVATE_KEY");
-        const flowAddr = !!runtime.getSetting("ZEROG_FLOW_ADDRESS");
-        return zgIndexerRpc && zgEvmRpc && zgPrivateKey && flowAddr;
+        console.log("Validating upload from user:", message.userId);
+        return true;
     },
     handler: async (
         runtime: IAgentRuntime,
@@ -61,37 +47,39 @@ export const zgUpload: Action = {
             state = await runtime.updateRecentMessageState(state);
         }
 
+        // Get current directory and list files in it
+        const currentDir = process.cwd();
+        const filesInCurrentDir = await fs.readdir(currentDir);
+
+        // Replace template variables
+        const promptTemplate = uploadTemplate
+            .replace("{{listFilesInCurrentDir}}", filesInCurrentDir.join(", "))
+            .replace("${process.cwd()}", currentDir);
+
         // Compose upload context
         const uploadContext = composeContext({
             state,
-            template: uploadTemplate,
+            template: promptTemplate,
         });
-
+        console.log("Upload context:", uploadContext);
         // Generate upload content
         const content = await generateObjectV2({
             runtime,
             context: uploadContext,
             modelClass: ModelClass.SMALL,
+            schema: UploadSchema,
         });
-
+        console.log("Upload content:", content.object);
         // Validate upload content
-        if (!isUploadContent(runtime, content)) {
-            console.error("Invalid content for UPLOAD action.");
-            if (callback) {
-                callback({
-                    text: "Unable to process 0G upload request. Invalid content provided.",
-                    content: { error: "Invalid upload content" },
-                });
-            }
-            return false;
+        if (!isUploadContent(content.object)) {
+            throw new Error("Invalid content");
         }
 
         try {
-            const zgIndexerRpc = runtime.getSetting("ZEROG_INDEXER_RPC");
-            const zgEvmRpc = runtime.getSetting("ZEROG_EVM_RPC");
-            const zgPrivateKey = runtime.getSetting("ZEROG_PRIVATE_KEY");
-            const flowAddr = runtime.getSetting("ZEROG_FLOW_ADDRESS");
-            const filePath = content.filePath;
+            const zgIndexerRpc = settings.ZEROG_INDEXER_RPC;
+            const zgEvmRpc = settings.ZEROG_EVM_RPC;
+            const zgPrivateKey = settings.ZEROG_PRIVATE_KEY;
+            const filePath = content.object.filePath;
             if (!filePath) {
                 console.error("File path is required");
                 return false;
@@ -120,23 +108,27 @@ export const zgUpload: Action = {
             const provider = new ethers.JsonRpcProvider(zgEvmRpc);
             const signer = new ethers.Wallet(zgPrivateKey, provider);
             const indexer = new Indexer(zgIndexerRpc);
-            const flowContract = getFlowContract(flowAddr, signer);
 
-            var [tx, err] = await indexer.upload(
-                file,
-                0,
-                zgEvmRpc,
-                flowContract
-            );
+            var [tx, err] = await indexer.upload(file, zgEvmRpc, signer);
             if (err === null) {
                 console.log("File uploaded successfully, tx: ", tx);
             } else {
-                console.error("Error uploading file: ", err);
-                return false;
+                console.log("Error uploading file: ", err);
             }
 
             await file.close();
+
+            if (callback) {
+                callback({
+                    text: `File ${content.object.filePath} uploaded successfully, tx: ${tx}`,
+                });
+            }
         } catch (error) {
+            if (callback) {
+                callback({
+                    text: `Error uploading file ${content.object.filePath}: ${error}`,
+                });
+            }
             console.error("Error getting settings for 0G upload:", error);
         }
     },
@@ -145,7 +137,16 @@ export const zgUpload: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "upload my resume.pdf file",
+                    text: "upload /root/resume.pdf to ZeroG",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploaded /root/resume.pdf to ZeroG now...",
+                    content: {
+                        filePath: "/root/resume.pdf",
+                    },
                     action: "ZG_UPLOAD",
                 },
             },
@@ -154,19 +155,19 @@ export const zgUpload: Action = {
             {
                 user: "{{user1}}",
                 content: {
-                    text: "can you help me upload this document.docx?",
-                    action: "ZG_UPLOAD",
+                    text: "upload resume.pdf under current directory to ZeroG",
                 },
             },
-        ],
-        [
             {
-                user: "{{user1}}",
+                user: "{{user2}}",
                 content: {
-                    text: "I need to upload an image file image.png",
+                    text: "uploaded ${pwd}/resume.pdf.",
+                    content: {
+                        filePath: "${pwd}/resume.pdf",
+                    },
                     action: "ZG_UPLOAD",
                 },
             },
-        ],
+        ]
     ] as ActionExample[][],
 } as Action;

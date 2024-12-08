@@ -4,7 +4,6 @@ Example response:
 \`\`\`json
 {
     "filePath": null,
-    "description": "I want to upload a file"
 }
 \`\`\`
 
@@ -17,6 +16,9 @@ Extract the user's intention to upload a file from the conversation. Users might
 - "upload"
 - "let me share a file"
 
-If the user provides any specific description of the file, include that as well.
+If the user provides a specific file path, use that as the file path. Otherwise, use the file name in the current directory.
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Current directory info:
+- Current working directory: \`\${process.cwd()}\` (Path where the current program is running).
+- Files in current directory: \`{{listFilesInCurrentDir}}\``;
+
