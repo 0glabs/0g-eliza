@@ -1,12 +1,13 @@
 import { Plugin } from "@ai16z/eliza";
-import { zgUpload } from "./actions/upload";
+import { zgsUpload } from "./actions/storage/upload";
 import { zgcListServices } from "./actions/compute_network/list_service";
 import { zgcCreateAccount } from "./actions/compute_network/create_account";
-import { zgcDeposit } from "./actions/compute_network/deposit";
+import { zgcDepositFund } from "./actions/compute_network/deposit_fund";
+import { zgcCallService } from "./actions/compute_network/call_service";
 export const zgPlugin: Plugin = {
     description: "ZeroG Plugin for Eliza",
     name: "ZeroG",
-    actions: [zgUpload, zgcListServices, zgcCreateAccount, zgcDeposit],
+    actions: [zgsUpload, zgcListServices, zgcCreateAccount, zgcDepositFund, zgcCallService],
     evaluators: [],
     providers: [],
 };

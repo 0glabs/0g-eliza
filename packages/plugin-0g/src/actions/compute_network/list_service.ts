@@ -7,9 +7,9 @@ import {
     ActionExample,
 } from "@ai16z/eliza";
 import { ethers } from "ethers";
-import { settings } from "@ai16z/eliza";
 import { createZGServingNetworkBroker } from "@0glabs/0g-serving-broker";
 import { stringToUuid } from "@ai16z/eliza";
+import { validateZeroGConfig } from "../../enviroment";
 export const zgcListServices: Action = {
     name: "ZGC_LIST_SERVICES",
     similes: [
@@ -74,8 +74,9 @@ export const zgcListServices: Action = {
     ) => {
         console.log("ZG_LIST_SERVICES action called");
         try {
-            const provider = new ethers.JsonRpcProvider(settings.ZEROG_EVM_RPC);
-            const signer = new ethers.Wallet(settings.ZEROG_PRIVATE_KEY, provider);
+            const zgConfig = await validateZeroGConfig(runtime);
+            const provider = new ethers.JsonRpcProvider(zgConfig.ZEROG_RPC_URL);
+            const signer = new ethers.Wallet(zgConfig.ZEROG_PRIVATE_KEY, provider);
             const broker = await createZGServingNetworkBroker(signer);
             const services = await broker.listService();
             const formattedServices = services.map(service => ({
@@ -103,26 +104,20 @@ export const zgcListServices: Action = {
             };
             await runtime.messageManager.createMemory(memory);
 
-            if(!state){
-                state = await runtime.composeState(memory) as State;
-            } else {
-                state = await runtime.updateRecentMessageState(state);
-            }
-
             if (callback) {
                 callback(
                     {
-                    text: `Available services: ${JSON.stringify(formattedServices)}`,
+                    text: `Available services on ZGC: ${JSON.stringify(formattedServices)}`,
                     content: {
                         services: formattedServices,
                     },
                 });
             }
         } catch (error) {
-            console.error("Error listing services:", error);
+            console.error("Error listing services on ZGC:", error);
             if (callback) {
                 callback({
-                    text: `Error listing services: ${error}`,
+                    text: `Error listing services on ZGC: ${error}`,
                 });
             }
         }

@@ -5,18 +5,14 @@ import {
     Memory,
     State,
     ModelClass,
-    ActionExample,
-    generateObject,
+    generateObjectV2,
 } from "@ai16z/eliza";
-import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
 import { ethers } from "ethers";
-import { composeContext, settings } from "@ai16z/eliza";
-import { promises as fs } from "fs";
-import { MemoryManager } from "@ai16z/eliza";
+import { composeContext } from "@ai16z/eliza";
 import { createZGServingNetworkBroker } from '@0glabs/0g-serving-broker'
-import { zgcExtractServicesTemplate } from '../../templates/compute_network/extract_service';
-import { ServiceListSchema } from '../../types';
-import { RuleTester } from "eslint";
+import { zgcExtractDepositTemplate } from '../../templates/compute_network/extract_deposit';
+import { ServiceDepositSchema, isServiceDepositContent } from '../../types';
+import { validateZeroGConfig } from "../../enviroment";
 
 export const zgcCreateAccount: Action = {
     name: "ZGC_CREATE_ACCOUNT",
@@ -123,32 +119,41 @@ export const zgcCreateAccount: Action = {
             } else {
                 state = await runtime.updateRecentMessageState(state);
             }
+            const zgConfig = await validateZeroGConfig(runtime);
 
-            const promptTemplate = zgcExtractServicesTemplate
+            const promptTemplate = zgcExtractDepositTemplate
                 .replace("{{info}}", memories.map(m => m.content.text).join("\n"))
-            const zgcExtractServicesContext = composeContext({
+            const zgcExtractDepositContext = composeContext({
                 state,
                 template: promptTemplate,
             });
-            // console.log("zgcExtractServicesContext:", zgcExtractServicesContext);
+            // console.log("zgcExtractDepositContext:", zgcExtractDepositContext);
 
-            const content = await generateObject({
+            const content = await generateObjectV2({
                 runtime,
-                context: zgcExtractServicesContext,
+                context: zgcExtractDepositContext,
                 modelClass: ModelClass.SMALL,
+                schema: ServiceDepositSchema,
             });
+            if (!isServiceDepositContent(content.object)) {
+                throw new Error("Invalid content");
+            }
+            console.log("Your selected provider and wanted deposit amount is:", content.object);
 
-            console.log("You selected and the deposit amount is:", content);
-
-            const provider = new ethers.JsonRpcProvider(settings.ZEROG_EVM_RPC);
-            const signer = new ethers.Wallet(settings.ZEROG_PRIVATE_KEY, provider);
+            const provider = new ethers.JsonRpcProvider(zgConfig.ZEROG_RPC_URL);
+            const signer = new ethers.Wallet(zgConfig.ZEROG_PRIVATE_KEY, provider);
             const broker = await createZGServingNetworkBroker(signer);
 
-            await broker.depositFund(content.provider, content.deposit);
-
+            await broker.addAccount(content.object.service.provider, Number(content.object.deposit));
+            const account = await broker.getAccount(content.object.service.provider);
+            console.log("Create account on ZGC successfully, the account info is as follows:", account);
             if (callback) {
                 callback({
-                    text: `Created account on ${content.provider} with deposit ${content.deposit} A0GI`,
+                    text: `Created account on ${content.object.service.provider} with deposit ${content.object.deposit} A0GI, and the account balance is ${account.balance} neuron (1e18 neuron = 1 A0GI)`,
+                    content: {
+                        service: content.object.service,
+                        deposit: content.object.deposit,
+                    },
                 });
             }
         } catch (error) {

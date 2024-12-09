@@ -14,11 +14,11 @@ import { ethers } from "ethers";
 import { composeContext, settings } from "@ai16z/eliza";
 import { promises as fs } from "fs";
 
-import { uploadTemplate } from "../templates/upload";
-import { UploadSchema, isUploadContent } from "../types";
+import { zgsExtractFilePathTemplate } from "../../templates/storage/extract_file_path";
+import { UploadSchema, isUploadContent } from "../../types";
 
-export const zgUpload: Action = {
-    name: "ZG_UPLOAD",
+export const zgsUpload: Action = {
+    name: "ZGS_UPLOAD",
     similes: [
         "UPLOAD_FILE_TO_ZG",
         "STORE_FILE_ON_ZG",
@@ -52,7 +52,7 @@ export const zgUpload: Action = {
         const filesInCurrentDir = await fs.readdir(currentDir);
 
         // Replace template variables
-        const promptTemplate = uploadTemplate
+        const promptTemplate = zgsExtractFilePathTemplate
             .replace("{{listFilesInCurrentDir}}", filesInCurrentDir.join(", "))
             .replace("${process.cwd()}", currentDir);
 
