@@ -97,3 +97,42 @@ export const isServiceCallInputsContent = (object: any): object is ServiceCallIn
     console.error("Invalid content: ", object);
     return false;
 };
+
+export const InteractWithServiceSchema = z.object({
+    service: ServiceSchema,
+    instruction: z.string(),
+    input: z.string(),
+});
+
+export interface InteractWithServiceContent {
+    service: ServiceContent;
+    instruction: string;
+    input: string;
+}
+
+export const isInteractWithServiceContent = (object: any): object is InteractWithServiceContent => {
+    if (InteractWithServiceSchema.safeParse(object).success) {
+        return true;
+    }
+    console.error("Invalid content: ", object);
+    return false;
+};
+
+
+export const SettleFeeSchema = z.object({
+    service: ServiceSchema,
+    fee: z.string(),
+});
+
+export interface SettleFeeContent {
+    service: ServiceContent;
+    fee: string;
+}
+
+export const isSettleFeeContent = (object: any): object is SettleFeeContent => {
+    if (SettleFeeSchema.safeParse(object).success) {
+        return true;
+    }
+    console.error("Invalid content: ", object);
+    return false;
+};

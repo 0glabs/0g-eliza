@@ -5,6 +5,7 @@ import {
     Memory,
     State,
     ModelClass,
+    stringToUuid,
 } from "@ai16z/eliza";
 import { ethers } from "ethers";
 import { composeContext } from "@ai16z/eliza";
@@ -14,6 +15,8 @@ import { generateObjectV2 } from "@ai16z/eliza";
 import { ServiceCallInputsSchema, isServiceCallInputsContent } from '../../types';
 import { validateZeroGConfig } from "../../enviroment";
 import { OpenAI } from "openai";
+
+const unpaidError = "Please use 'settleFee' (https://docs.0g.ai/build-with-0g/compute-network/sdk#55-settle-fees-manually) to manually settle the fee first";
 
 export const zgcCallService: Action = {
     name: "ZGC_CALL_SERVICE",
@@ -174,8 +177,26 @@ export const zgcCallService: Action = {
             if (result.error) {
                 // extract unpaid service
                 // if exists unpaid service, call the unpaid service, return with tip that "You have an unpaid service, I can help you pay it, if yes, please give me the instructions maybe like 'pay the unpaid service'"
-
-                // if not exists unpaid service, throw error
+                if (result.error.includes(unpaidError)) {
+                    // if not exists unpaid service, throw error
+                    const memory: Memory = {
+                        id: stringToUuid(Date.now().toString()),
+                        agentId: message.agentId,
+                        userId: message.userId,
+                        roomId: message.roomId,
+                        content: {
+                            text: `Unpaied error: ${result.error}, Unpaied provider: ${content.object.service.provider}, Unpaied service: ${content.object.service.name}`,
+                        },
+                        createdAt: Date.now(),
+                    };
+                    await runtime.messageManager.createMemory(memory);
+                    if (callback) {
+                        callback({
+                            text: `You have an unpaid service, I can help you pay it, if yes, please give me the instructions maybe like 'pay the unpaied fee service on Zero Gravity Compute Network'`,
+                        });
+                    }
+                    return;
+                }
                 throw new Error(`Error calling service on ZGC: ${result.error}`);
             }
 
