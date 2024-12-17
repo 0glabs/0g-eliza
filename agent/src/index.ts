@@ -259,6 +259,12 @@ export function getTokenForProvider(
                 character.settings?.secrets?.VOLENGINE_API_KEY ||
                 settings.VOLENGINE_API_KEY
             );
+        // 0G
+        case ModelProviderName.ZERO_G:
+            return (
+                character.settings?.secrets?.OPENAI_API_KEY ||
+                settings.OPENAI_API_KEY
+            );
     }
 }
 

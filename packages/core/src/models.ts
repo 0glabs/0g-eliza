@@ -376,6 +376,22 @@ export const models: Models = {
             [ModelClass.EMBEDDING]: "doubao-embedding",
         },
     },
+    [ModelProviderName.ZERO_G]: {
+        endpoint: "http://8.210.69.6:3080/v1/proxy/chat-provider-1",
+        settings: {
+            stop: [],
+            maxInputTokens: 128000,
+            maxOutputTokens: 8192,
+            frequency_penalty: 0.4,
+            presence_penalty: 0.4,
+            temperature: 0.6,
+        },
+        model: {
+            [ModelClass.SMALL]: "meta-llama/meta-llama-3.1-8b-instruct",
+            [ModelClass.MEDIUM]: "meta-llama/meta-llama-3.1-8b-instruct",
+            [ModelClass.LARGE]: "meta-llama/meta-llama-3.1-8b-instruct",
+        },
+    },
 };
 
 export function getModel(provider: ModelProviderName, type: ModelClass) {

@@ -13,7 +13,7 @@ import { createOllama } from "ollama-ai-provider";
 import OpenAI from "openai";
 import { encodingForModel, TiktokenModel } from "js-tiktoken";
 import Together from "together-ai";
-import { ZodSchema } from "zod";
+import { isValid, ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import { getModel, models } from "./models.ts";
 import {
@@ -34,6 +34,9 @@ import {
     SearchResponse,
 } from "./types.ts";
 import { fal } from "@fal-ai/client";
+
+import { ethers } from "ethers";
+import { createZGServingNetworkBroker } from "@0glabs/0g-serving-broker";
 
 /**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
@@ -428,6 +431,12 @@ export async function generateText({
 
                 response = galadrielResponse;
                 elizaLogger.debug("Received response from Galadriel model.");
+                break;
+            }
+            // 0G, call service on ZeroG compute network to generate object
+            case ModelProviderName.ZERO_G: {
+                elizaLogger.debug("Initializing ZeroG model.");
+                response = await ZgcGenerateObject(endpoint, model, context);
                 break;
             }
 
@@ -1086,6 +1095,7 @@ export const generateObjectV2 = async ({
 
     const provider = runtime.modelProvider;
     const model = models[provider].model[modelClass] as TiktokenModel;
+
     if (!model) {
         throw new Error(`Unsupported model class: ${modelClass}`);
     }
@@ -1098,6 +1108,9 @@ export const generateObjectV2 = async ({
 
     try {
         context = trimTokens(context, max_context_length, model);
+        if (provider === ModelProviderName.ZERO_G) {
+            context = trimTokens(context, max_context_length, "gpt-4o");
+        }
 
         const modelOptions: ModelSettings = {
             prompt: context,
@@ -1185,6 +1198,13 @@ export async function handleProvider(
             return await handleOpenRouter(options);
         case ModelProviderName.OLLAMA:
             return await handleOllama(options);
+        // 0G
+        case ModelProviderName.ZERO_G:
+            return await generateObject({
+                runtime,
+                context,
+                modelClass,
+            });
         default: {
             const errorMessage = `Unsupported provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -1405,4 +1425,99 @@ async function handleOllama({
         mode,
         ...modelOptions,
     });
+}
+
+// 0G: call service on ZeroG compute network to generate object
+async function ZgcGenerateObject(endpoint: string,  model: string, context: string) : Promise<string> {
+
+    try {
+        const wallet = new ethers.JsonRpcProvider(settings.ZEROG_RPC_URL);
+        const signer = new ethers.Wallet(settings.ZEROG_PRIVATE_KEY, wallet);
+        const broker = await createZGServingNetworkBroker(signer);
+
+        const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
+        const zgc_service_name = settings.ZEROG_COMPUTE_SERVICE_NAME;
+
+        const headers = await broker.getRequestHeaders(
+            zgc_provider,
+            zgc_service_name,
+            context
+        );
+
+        elizaLogger.debug("headers", headers);
+        elizaLogger.info("endpoint", endpoint);
+        elizaLogger.info("model", model);
+
+        const completion = await fetch(`${endpoint}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers,
+            },
+            body: JSON.stringify({
+                messages: [{ role: 'system', content: context }],
+                model: model,
+            }),
+        });
+
+        if (!completion.ok) {
+            const errorText = await completion.text();
+            elizaLogger.error("Network error calling service on ZGC:", {
+                status: completion.status,
+                statusText: completion.statusText,
+                errorText
+            });
+            throw new Error(`Network error calling service on ZGC: ${errorText}`);
+        }
+
+        let responseText = await completion.text();
+        elizaLogger.debug("Raw response text:", responseText);
+
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (jsonError) {
+            elizaLogger.error("Error parsing JSON response:", {
+                error: jsonError,
+                responseText,
+            });
+            throw new Error("Error parsing JSON response: " + jsonError.message);
+        }
+
+        if (result.error) {
+            elizaLogger.error("Error calling service on ZGC: ", result.error);
+            throw new Error(`Error calling service on ZGC: ${result.error}`);
+        }
+
+        elizaLogger.debug("result", result);
+        const response = result.choices[0]?.message?.content;
+        const chatID = result.id;
+        elizaLogger.log("response", response);
+
+        if (!response) {
+            elizaLogger.error("No output received from ZGC.");
+            throw new Error("No output received.");
+        }
+
+        try {
+            const isValid = await broker.processResponse(
+                zgc_provider,
+                zgc_service_name,
+                response,
+                chatID
+            );
+            if (!isValid) {
+                elizaLogger.error("Invalid response received from ZGC.");
+                throw new Error("Invalid response");
+            }
+        } catch (error) {
+            elizaLogger.error("Error in processResponse:", error);
+            throw error;
+        }
+
+        return response;
+    } catch (error) {
+        elizaLogger.error("Error in ZgcGenerateObject:", error);
+        throw error;
+    }
 }

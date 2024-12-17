@@ -1,15 +1,17 @@
 import { z } from "zod";
 
-export const UploadSchema = z.object({
-    filePath: z.string()
+export const FilePathSchema = z.object({
+    filePath: z.string(),
+    rootHash: z.string().nullable(),
 });
 
-export interface UploadContent {
+export interface FilePathContent {
     filePath: string;
+    rootHash: string | null;
 }
 
-export const isUploadContent = (object: any): object is UploadContent => {
-    if (UploadSchema.safeParse(object).success) {
+export const isFilePathContent = (object: any): object is FilePathContent => {
+    if (FilePathSchema.safeParse(object).success) {
         return true;
     }
     console.error("Invalid content: ", object);

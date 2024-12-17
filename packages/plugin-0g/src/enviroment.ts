@@ -10,6 +10,7 @@ export const zeroGEnvSchema = z.object({
     ZEROG_INDEXER_RPC_URL: z.string().min(1, "ZeroG indexer RPC URL is required"),
 
     // ZeroG compute network
+    ZEROG_COMPUTE_PROVIDER_ADDRESS: z.string().min(1, "ZeroG compute provider address is required"),
 });
 
 
@@ -29,6 +30,9 @@ export async function validateZeroGConfig(
             ZEROG_INDEXER_RPC_URL:
                 runtime.getSetting("ZEROG_INDEXER_RPC_URL") ||
                 process.env.ZEROG_INDEXER_RPC_URL,
+            ZEROG_COMPUTE_PROVIDER_ADDRESS:
+                runtime.getSetting("ZEROG_COMPUTE_PROVIDER_ADDRESS") ||
+                process.env.ZEROG_COMPUTE_PROVIDER_ADDRESS,
         };
 
         return zeroGEnvSchema.parse(config);

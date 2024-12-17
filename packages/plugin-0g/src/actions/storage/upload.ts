@@ -7,7 +7,7 @@ import {
     ModelClass,
     ActionExample,
     generateObjectV2,
-    generateObject,
+    elizaLogger
 } from "@ai16z/eliza";
 import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
 import { ethers } from "ethers";
@@ -15,7 +15,8 @@ import { composeContext, settings } from "@ai16z/eliza";
 import { promises as fs } from "fs";
 
 import { zgsExtractFilePathTemplate } from "../../templates/storage/extract_file_path";
-import { UploadSchema, isUploadContent } from "../../types";
+import { FilePathSchema, isFilePathContent } from "../../types";
+import { validateZeroGConfig } from "../../enviroment";
 
 export const zgsUpload: Action = {
     name: "ZGS_UPLOAD",
@@ -67,42 +68,38 @@ export const zgsUpload: Action = {
             runtime,
             context: uploadContext,
             modelClass: ModelClass.SMALL,
-            schema: UploadSchema,
+            schema: FilePathSchema,
         });
         console.log("Upload content:", content.object);
         // Validate upload content
-        if (!isUploadContent(content.object)) {
+        if (!isFilePathContent(content.object)) {
             throw new Error("Invalid content");
         }
-
+        const zgConfig = await validateZeroGConfig(runtime);
         try {
-            const zgIndexerRpc = settings.ZEROG_INDEXER_RPC;
-            const zgEvmRpc = settings.ZEROG_EVM_RPC;
-            const zgPrivateKey = settings.ZEROG_PRIVATE_KEY;
+            const zgIndexerRpc = zgConfig.ZEROG_INDEXER_RPC_URL;
+            const zgEvmRpc = zgConfig.ZEROG_RPC_URL;
+            const zgPrivateKey = zgConfig.ZEROG_PRIVATE_KEY;
             const filePath = content.object.filePath;
-            if (!filePath) {
-                console.error("File path is required");
-                return false;
-            }
 
             // Check if file exists and is accessible
             try {
                 await fs.access(filePath);
             } catch (error) {
-                console.error(
+                elizaLogger.error(
                     `File ${filePath} does not exist or is not accessible:`,
                     error
                 );
-                return false;
+                throw new Error(`File ${filePath} does not exist or is not accessible`);
             }
 
             const file = await ZgFile.fromFilePath(filePath);
             var [tree, err] = await file.merkleTree();
             if (err === null) {
-                console.log("File Root Hash: ", tree.rootHash());
+                elizaLogger.log("File Root Hash:", tree.rootHash());
             } else {
-                console.log("Error getting file root hash: ", err);
-                return false;
+                elizaLogger.error("Error getting file root hash:", err);
+                throw new Error(`Error getting file root hash: ${err}`);
             }
 
             const provider = new ethers.JsonRpcProvider(zgEvmRpc);
@@ -111,16 +108,17 @@ export const zgsUpload: Action = {
 
             var [tx, err] = await indexer.upload(file, zgEvmRpc, signer);
             if (err === null) {
-                console.log("File uploaded successfully, tx: ", tx);
+                elizaLogger.info("File uploaded successfully, tx:", tx);
             } else {
-                console.log("Error uploading file: ", err);
+                elizaLogger.error("Error uploading file:", err);
+                throw new Error(`Error uploading file: ${err}`);
             }
 
             await file.close();
 
             if (callback) {
                 callback({
-                    text: `File ${content.object.filePath} uploaded successfully, tx: ${tx}`,
+                    text: `File ${content.object.filePath} uploaded successfully, tx:${tx}`,
                 });
             }
         } catch (error) {
@@ -129,7 +127,8 @@ export const zgsUpload: Action = {
                     text: `Error uploading file ${content.object.filePath}: ${error}`,
                 });
             }
-            console.error("Error getting settings for 0G upload:", error);
+            elizaLogger.error("Error uploading file:", error);
+            return false;
         }
     },
     examples: [
@@ -140,16 +139,6 @@ export const zgsUpload: Action = {
                     text: "upload /root/resume.pdf to ZeroG",
                 },
             },
-            {
-                user: "{{user2}}",
-                content: {
-                    text: "uploaded /root/resume.pdf to ZeroG now...",
-                    content: {
-                        filePath: "/root/resume.pdf",
-                    },
-                    action: "ZG_UPLOAD",
-                },
-            },
         ],
         [
             {
@@ -158,14 +147,20 @@ export const zgsUpload: Action = {
                     text: "upload resume.pdf under current directory to ZeroG",
                 },
             },
+        ],
+        [
             {
-                user: "{{user2}}",
+                user: "{{user1}}",
                 content: {
-                    text: "uploaded ${pwd}/resume.pdf.",
-                    content: {
-                        filePath: "${pwd}/resume.pdf",
-                    },
-                    action: "ZG_UPLOAD",
+                    text: "upload resume.pdf to ZeroG",
+                },
+            },
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "upload resume.pdf to Zero Gravity",
                 },
             },
         ]
