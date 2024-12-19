@@ -109,14 +109,9 @@ About {{agentName}}:
 {{bio}}
 {{lore}}
 
-Examples of {{agentName}}'s dialog and actions:
-{{characterMessageExamples}}
-
 {{providers}}
 
 {{attachments}}
-
-{{actions}}
 
 # Capabilities
 Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
@@ -125,12 +120,9 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 {{recentMessages}}
 
-# Task: Generate a post/reply in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}) while using the thread of tweets as additional context:
-Current Post:
-{{currentPost}}
-Thread of Tweets You Are Replying To:
+{{actions}}
 
-{{formattedConversation}}
+# Instructions: Write the next message for {{agentName}}.
 ` + messageCompletionFooter;
 
 export class MessageManager {
@@ -145,11 +137,15 @@ export class MessageManager {
     // Process image messages and generate descriptions
     private async processImage(
         message: Message
-    ): Promise<{ description: string } | null> {
+    ): Promise<{ description: string, url: string } | null> {
         try {
+            // image info
             let imageUrl: string | null = null;
-
+            // document info
+            let docUrl: string | null = null;
+            let docName: string | null = null;
             if ("photo" in message && message.photo?.length > 0) {
+                // elizaLogger.log("received image message");
                 const photo = message.photo[message.photo.length - 1];
                 const fileLink = await this.bot.telegram.getFileLink(
                     photo.file_id
@@ -159,12 +155,22 @@ export class MessageManager {
                 "document" in message &&
                 message.document?.mime_type?.startsWith("image/")
             ) {
+                //elizaLogger.log("received document message");
                 const fileLink = await this.bot.telegram.getFileLink(
                     message.document.file_id
                 );
                 imageUrl = fileLink.toString();
             }
-
+            // process document
+            else if ("document" in message) {
+                const fileLink = await this.bot.telegram.getFileLink(
+                    message.document.file_id
+                );
+                docUrl = fileLink.toString();
+                docName = message.document.file_name;
+            }
+            let composedDescription: string | null = null;
+            let url: string | null = null;
             if (imageUrl) {
                 const imageDescriptionService =
                     this.runtime.getService<IImageDescriptionService>(
@@ -172,8 +178,14 @@ export class MessageManager {
                     );
                 const { title, description } =
                     await imageDescriptionService.describeImage(imageUrl);
-                return { description: `[Image: ${title}\n${description}]` };
+                composedDescription = `[Image: ${title}\n${description}]`;
+                url = `[Url: ${imageUrl}]`;
             }
+            if (docUrl) {
+                composedDescription = `[Document: (TODO: Here is the file description.)]`;
+                url = `[Url: ${docUrl}]`;
+            }
+            return { description: composedDescription, url: url };
         } catch (error) {
             console.error("❌ Error processing image:", error);
         }
@@ -373,12 +385,12 @@ export class MessageManager {
             } else if ("caption" in message && message.caption) {
                 messageText = message.caption;
             }
-
+            // elizaLogger.log("received messageText:", messageText);
             // Combine text and image description
             const fullText = imageInfo
-                ? `${messageText} ${imageInfo.description}`
+                ? `${messageText} ${imageInfo.description} ${imageInfo.url}`
                 : messageText;
-
+            // elizaLogger.log("received fullText:", fullText);
             if (!fullText) {
                 return; // Skip if no content
             }
@@ -396,7 +408,7 @@ export class MessageManager {
                           )
                         : undefined,
             };
-
+            // elizaLogger.log("wei_tg_content:", content);
             // Create memory for the message
             const memory: Memory = {
                 id: messageId,
@@ -405,7 +417,6 @@ export class MessageManager {
                 roomId,
                 content,
                 createdAt: message.date * 1000,
-                embedding: getEmbeddingZeroVector(),
             };
 
             // Create memory
@@ -468,7 +479,6 @@ export class MessageManager {
                                 inReplyTo: messageId,
                             },
                             createdAt: sentMessage.date * 1000,
-                            embedding: getEmbeddingZeroVector(),
                         };
 
                         // Set action to CONTINUE for all messages except the last one

@@ -47,12 +47,32 @@ export const zgcListServices: Action = {
                     text: "show me all services on ZeroG",
                 },
             },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "services were listed",
+                    content: {
+                        services: [],
+                    },
+                    action: "ZGC_LIST_SERVICES",
+                },
+            },
         ],
         [
             {
                 user: "{{user1}}",
                 content: {
                     text: "show me all services on ZGC",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "services were listed",
+                    content: {
+                        services: [],
+                    },
+                    action: "ZGC_LIST_SERVICES",
                 },
             },
         ],
@@ -63,7 +83,17 @@ export const zgcListServices: Action = {
                     text: "list all services on ZGC",
                 },
             },
-        ]
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "services were listed",
+                    content: {
+                        services: [],
+                    },
+                    action: "ZGC_LIST_SERVICES",
+                },
+            },
+        ],
     ] as ActionExample[][],
     handler: async (
         runtime: IAgentRuntime,

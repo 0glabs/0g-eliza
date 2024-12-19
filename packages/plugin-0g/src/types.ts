@@ -3,11 +3,13 @@ import { z } from "zod";
 export const FilePathSchema = z.object({
     filePath: z.string(),
     rootHash: z.string().nullable(),
+    isUrl: z.boolean(),
 });
 
 export interface FilePathContent {
     filePath: string;
     rootHash: string | null;
+    isUrl: boolean;
 }
 
 export const isFilePathContent = (object: any): object is FilePathContent => {

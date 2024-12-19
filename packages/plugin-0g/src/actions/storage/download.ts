@@ -13,6 +13,7 @@ import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
 import { ethers } from "ethers";
 import { composeContext, settings } from "@ai16z/eliza";
 import { promises as fs } from "fs";
+import * as path from 'path';
 
 import { zgsExtractFilePathTemplate } from "../../templates/storage/extract_file_path";
 import { FilePathSchema, isFilePathContent } from "../../types";
@@ -84,10 +85,16 @@ export const zgsDownload: Action = {
             const indexer = new Indexer(zgIndexerRpc);
             elizaLogger.log("Downloading file content:", content.object);
 
+            const filePath = content.object.filePath;
+            const directoryPath = path.dirname(filePath);
+            // check if the directory is writable
+            await fs.access(directoryPath, fs.constants.F_OK | fs.constants.W_OK);
+            elizaLogger.log("Directory is accessible and writable:", directoryPath);
+
             const err = await indexer.download(content.object.rootHash, content.object.filePath, true);
             if (err !== null) {
                 elizaLogger.error("Error downloading file:", err);
-                return false;
+                throw new Error("Error downloading file");
             }
 
             if (callback) {
@@ -111,6 +118,13 @@ export const zgsDownload: Action = {
                 content: {
                     text: "download /root/resume.pdf with root hash 0x1234567890 from ZeroG",
                 },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "downloading /root/resume.pdf with root hash 0x1234567890 from ZeroG",
+                    action: "ZGS_DOWNLOAD",
+                },
             }
         ],
         [
@@ -118,6 +132,13 @@ export const zgsDownload: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "download file with root hash 0x1234567890 from ZeroG as resume.pdf under current directory",
+                }
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "downloading file with root hash 0x1234567890 from ZeroG as resume.pdf under current directory",
+                    action: "ZGS_DOWNLOAD",
                 },
             }
         ],
@@ -127,6 +148,13 @@ export const zgsDownload: Action = {
                 content: {
                     text: "download file with root hash 0x1234567890 from Zero Gravity as resume.pdf under current directory",
                 },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "downloading file with root hash 0x1234567890 from Zero Gravity as resume.pdf under current directory",
+                    action: "ZGS_DOWNLOAD",
+                },
             }
         ],
         [
@@ -135,6 +163,13 @@ export const zgsDownload: Action = {
                 content: {
                     text: "download file with root hash 0x1234567890 from Zero Gravity as resume.pdf",
                 },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "downloading file with root hash 0x1234567890 from Zero Gravity as resume.pdf",
+                    action: "ZGS_DOWNLOAD",
+                },
             }
         ],
         [
@@ -142,6 +177,13 @@ export const zgsDownload: Action = {
                 user: "{{user1}}",
                 content: {
                     text: "download file with root hash 0x1234567890 from Zero Gravity as /root/resume.pdf",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "downloading file with root hash 0x1234567890 from Zero Gravity as /root/resume.pdf",
+                    action: "ZGS_DOWNLOAD",
                 },
             }
         ]

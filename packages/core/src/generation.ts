@@ -1444,9 +1444,9 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
             context
         );
 
-        elizaLogger.debug("headers", headers);
-        elizaLogger.info("endpoint", endpoint);
-        elizaLogger.info("model", model);
+        elizaLogger.debug("zgc_headers", headers);
+        elizaLogger.info("zgc_endpoint", endpoint);
+        elizaLogger.info("zgc_model", model);
 
         const completion = await fetch(`${endpoint}/chat/completions`, {
             method: 'POST',
@@ -1489,10 +1489,10 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
             throw new Error(`Error calling service on ZGC: ${result.error}`);
         }
 
-        elizaLogger.debug("result", result);
+        elizaLogger.debug("zgc_result", result);
         const response = result.choices[0]?.message?.content;
         const chatID = result.id;
-        elizaLogger.log("response", response);
+        elizaLogger.debug("zgc_response", response);
 
         if (!response) {
             elizaLogger.error("No output received from ZGC.");
@@ -1510,6 +1510,7 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
                 elizaLogger.error("Invalid response received from ZGC.");
                 throw new Error("Invalid response");
             }
+            elizaLogger.info("Response from zgc is verified");
         } catch (error) {
             elizaLogger.error("Error in processResponse:", error);
             throw error;

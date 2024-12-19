@@ -17,6 +17,10 @@ import { promises as fs } from "fs";
 import { zgsExtractFilePathTemplate } from "../../templates/storage/extract_file_path";
 import { FilePathSchema, isFilePathContent } from "../../types";
 import { validateZeroGConfig } from "../../enviroment";
+import tmp from "tmp";
+import { createWriteStream } from 'fs';
+import * as https from "https";
+import * as http from "http";
 
 export const zgsUpload: Action = {
     name: "ZGS_UPLOAD",
@@ -62,7 +66,7 @@ export const zgsUpload: Action = {
             state,
             template: promptTemplate,
         });
-        console.log("Upload context:", uploadContext);
+        // console.log("Upload context:", uploadContext);
         // Generate upload content
         const content = await generateObjectV2({
             runtime,
@@ -80,11 +84,51 @@ export const zgsUpload: Action = {
             const zgIndexerRpc = zgConfig.ZEROG_INDEXER_RPC_URL;
             const zgEvmRpc = zgConfig.ZEROG_RPC_URL;
             const zgPrivateKey = zgConfig.ZEROG_PRIVATE_KEY;
-            const filePath = content.object.filePath;
+            let filePath = content.object.filePath;
 
             // Check if file exists and is accessible
             try {
-                await fs.access(filePath);
+                if (content.object.isUrl) {
+                    elizaLogger.log("Getting file from url:", filePath);
+                    const tmpFile = tmp.fileSync({ postfix: ".tmp" });
+                    const tmpFilePath = tmpFile.name;
+                    const downloadFile = async (url: string, dest: string): Promise<void> => {
+                        return new Promise((resolve, reject) => {
+                            const protocol = url.startsWith("https") ? https : http;
+                            const fileStream = createWriteStream(dest);
+
+                            protocol
+                                .get(url, (response) => {
+                                    if (response.statusCode !== 200) {
+                                        reject(
+                                            new Error(
+                                                `Failed to get file from URL. Status code: ${response.statusCode}`
+                                            )
+                                        );
+                                        return;
+                                    }
+
+                                    response.pipe(fileStream);
+                                    fileStream.on("finish", () => {
+                                        fileStream.close(() => {
+                                            elizaLogger.log("File successfully downloaded to:", dest);
+                                            resolve();
+                                        });
+                                    });
+                                })
+                                .on("error", (err) => {
+                                    fs.unlink(dest).catch(() => {
+                                        elizaLogger.error("Failed to clean up temporary file:", dest);
+                                    });
+                                    reject(err);
+                                });
+                        });
+                    };
+                    await downloadFile(filePath, tmpFilePath);
+                    filePath = tmpFilePath;
+                } else {
+                    await fs.access(filePath);
+                }
             } catch (error) {
                 elizaLogger.error(
                     `File ${filePath} does not exist or is not accessible:`,
@@ -95,8 +139,9 @@ export const zgsUpload: Action = {
 
             const file = await ZgFile.fromFilePath(filePath);
             var [tree, err] = await file.merkleTree();
+            const rootHash = tree.rootHash();
             if (err === null) {
-                elizaLogger.log("File Root Hash:", tree.rootHash());
+                elizaLogger.log("File Root Hash:", rootHash);
             } else {
                 elizaLogger.error("Error getting file root hash:", err);
                 throw new Error(`Error getting file root hash: ${err}`);
@@ -118,7 +163,7 @@ export const zgsUpload: Action = {
 
             if (callback) {
                 callback({
-                    text: `File ${content.object.filePath} uploaded successfully, tx:${tx}`,
+                    text: `File ${content.object.filePath} uploaded successfully, tx:${tx}, root hash:${rootHash}`,
                 });
             }
         } catch (error) {
@@ -139,6 +184,13 @@ export const zgsUpload: Action = {
                     text: "upload /root/resume.pdf to ZeroG",
                 },
             },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading /root/resume.pdf to ZeroG",
+                    action: "ZGS_UPLOAD",
+                },
+            }
         ],
         [
             {
@@ -147,6 +199,13 @@ export const zgsUpload: Action = {
                     text: "upload resume.pdf under current directory to ZeroG",
                 },
             },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading resume.pdf under current directory to ZeroG",
+                    action: "ZGS_UPLOAD",
+                },
+            }
         ],
         [
             {
@@ -155,6 +214,13 @@ export const zgsUpload: Action = {
                     text: "upload resume.pdf to ZeroG",
                 },
             },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading resume.pdf to ZeroG",
+                    action: "ZGS_UPLOAD",
+                },
+            }
         ],
         [
             {
@@ -163,6 +229,43 @@ export const zgsUpload: Action = {
                     text: "upload resume.pdf to Zero Gravity",
                 },
             },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading resume.pdf to Zero Gravity",
+                    action: "ZGS_UPLOAD",
+                },
+            }
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "upload the file to Zero Gravity [document: resume.pdf] [url: https://www.google.com]",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading the file to Zero Gravity [document: resume.pdf] [url: https://www.google.com]",
+                    action: "ZGS_UPLOAD",
+                },
+            }
+        ],
+        [
+            {
+                user: "{{user1}}",
+                content: {
+                    text: "upload the file to Zero Gravity [image: resume.pdf] [url: https://www.google.com]",
+                },
+            },
+            {
+                user: "{{user2}}",
+                content: {
+                    text: "uploading the file to Zero Gravity [image: resume.pdf] [url: https://www.google.com]",
+                    action: "ZGS_UPLOAD",
+                },
+            }
         ]
     ] as ActionExample[][],
 } as Action;
