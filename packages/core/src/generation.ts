@@ -1107,9 +1107,14 @@ export const generateObjectV2 = async ({
     const apiKey = runtime.token;
 
     try {
-        context = trimTokens(context, max_context_length, model);
         if (provider === ModelProviderName.ZERO_G) {
-            context = trimTokens(context, max_context_length, "gpt-4o");
+            context = trimTokens(
+                context,
+                max_context_length,
+                runtime.character.settings.embeddingModel as TiktokenModel || "gpt-4o"
+            );
+        } else {
+            context = trimTokens(context, max_context_length, model);
         }
 
         const modelOptions: ModelSettings = {
