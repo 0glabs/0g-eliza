@@ -6,7 +6,7 @@ sidebar_position: 18
 
 ## Overview
 
-Eliza's Agent NFT is a unique identifier for each agent, which is stored on the 0G blockchain. The NFT contains the agent's ownership and private data. The NFT can be transferred, cloned, and authorized to other agents following the 0G [ERC-7857](https://github.com/0glabs/ERCs/blob/master/ERCS/erc-7857.md) standard.
+Eliza's Agent NFT is a unique identifier for each agent, which is stored on the 0G blockchain. The NFT contains the agent's ownership and private data. The NFT can be transferred, cloned, and authorized to other. The NFT follows the 0G [ERC-7857](https://github.com/0glabs/ERCs/blob/master/ERCS/erc-7857.md) standard.
 
 ## Core Components
 
@@ -16,7 +16,7 @@ The core component of the Agent NFT is the `AgentNFTClient` class, which is used
 
 When generating a new agent NFT:
    - The agent's character data and memory (SQLite database) are stored in a specified base directory.
-   - The agent data are uploaded to the 0G storage network using the `Indexer`.
+   - The agent data is uploaded to the 0G storage network.
    - Merkle trees are generated for the character data and memory, and the root hashes are obtained.
    - Ownership proofs are generated using the preimages and claimed hashes (TODO: implement actual proof generation).
    - The `mintToken` method is called on the Agent NFT contract, passing the proofs and data descriptions.
@@ -25,11 +25,11 @@ When generating a new agent NFT:
 ### Start Agent from NFT
 
 When starting an agent from an existing NFT:
-   - The `loadFromNFT` function is called with the token ID and base directory when select starting an agent from an existing NFT.
-   - The token data (owner, data hashes, data descriptions, authorized users) is fetched from the contract.
+   - The `loadFromNFT` function is called with the token ID and base directory when starting an agent from an existing NFT.
+   - The token data (owner, data hashes, data descriptions, authorized users, storage url) is fetched from the contract.
    - Token ownership is validated by comparing the claimed owner with the actual token owner.
-   - The agent data files are downloaded from the 0G storage network using the `Indexer` and the data hashes and saved in the `AgentMetadata`.
-   - The agent started with `AgentMetadata` like previous starting with a local agent (character data and memory).
+   - The agent data is downloaded from the 0G storage network and the data hashes and saved in the `AgentMetadata`.
+   - The agent starts with `AgentMetadata` like previous starting with a local agent data (character data and memory).
 
 ## Configuration
 
@@ -44,13 +44,12 @@ The following environment variables are required:
 
 ### Generating an Agent NFT
 
-To generate a new agent NFT, run the `generate-nft` script:
+To generate a new agent NFT, run the `generate-nft` script with the parameter `--dir`, which is the base directory the agent data placed in, and `--dir` must be specified in generate-nft script:
 
 ```bash
 pnpm generate-nft --dir="./data"
 ```
-
-This will download the agent data associated with the specified token ID, save it in the `--dir`, and return the loaded characters.
+This will create a new agent NFT using the character data and memory stored in the specified `--dir` directory. The minted token ID will be logged.
 
 ### Starting an Agent from an Existing NFT
 
