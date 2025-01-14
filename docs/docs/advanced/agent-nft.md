@@ -6,17 +6,17 @@ sidebar_position: 18
 
 ## Overview
 
-Eliza's Agent NFT is a unique identifier for each agent, which is stored on the 0G blockchain. The NFT contains the agent's ownership and private data. The NFT can be transferred, cloned, and authorized to other. The NFT follows the 0G [ERC-7857](https://github.com/0glabs/ERCs/blob/master/ERCS/erc-7857.md) standard.
+Eliza's Agent NFT is a unique asset for each agent, which is stored on the [0G](https://0g.ai/) blockchain. The NFT contains the agent's ownership and private data. The NFT can be transferred, cloned, and authorized to other. The NFT follows the [ERC-7857](https://github.com/0glabs/ERCs/blob/master/ERCS/erc-7857.md) standard [0G](https://0g.ai/) proposed.
 
 ## Core Components
 
-The core component of the Agent NFT is the `AgentNFTClient` class, which is used to interact with the Agent NFT smart contract deployed on the 0G network. It provides methods to generate new agent NFTs from local agent data, and start a new agent from an existing NFT.
+The core component of the Agent NFT is the `AgentNFTClient` class, which is used to interact with the Agent NFT smart contract deployed on the [0G](https://0g.ai/) network. It provides methods to generate new agent NFTs from local agent data, and start a new agent from an existing NFT.
 
 ### Generate Agent NFT
 
 When generating a new agent NFT:
    - The agent's character data and memory (SQLite database) are stored in a specified base directory.
-   - The agent data is uploaded to the 0G storage network.
+   - The agent data is uploaded to the [0G](https://0g.ai/) storage network.
    - Merkle trees are generated for the character data and memory, and the root hashes are obtained.
    - Ownership proofs are generated using the preimages and claimed hashes (TODO: implement actual proof generation).
    - The `mintToken` method is called on the Agent NFT contract, passing the proofs and data descriptions.
@@ -28,7 +28,7 @@ When starting an agent from an existing NFT:
    - The `loadFromNFT` function is called with the token ID and base directory when starting an agent from an existing NFT.
    - The token data (owner, data hashes, data descriptions, authorized users, storage url) is fetched from the contract.
    - Token ownership is validated by comparing the claimed owner with the actual token owner.
-   - The agent data is downloaded from the 0G storage network and the data hashes and saved in the `AgentMetadata`.
+   - The agent data is downloaded from the [0G](https://0g.ai/) storage network and the data hashes and saved in the `AgentMetadata`.
    - The agent starts with `AgentMetadata` like previous starting with a local agent data (character data and memory).
 
 ## Configuration
@@ -36,7 +36,7 @@ When starting an agent from an existing NFT:
 The following environment variables are required:
 
 - `ZEROG_RPC_URL`: The RPC URL of the 0G network.
-- `ZEROG_INDEXER_RPC_URL`: The Indexer RPC URL for the 0G network.
+- `ZEROG_INDEXER_RPC_URL`: The Indexer RPC URL for the [0G](https://0g.ai/) network.
 - `ZEROG_PRIVATE_KEY`: The private key of the agent owner.
 - `ZEROG_AGENT_NFT_CONTRACT_ADDRESS`: The address of the Agent NFT contract.
 
