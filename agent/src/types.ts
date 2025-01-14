@@ -2,7 +2,7 @@ export interface ParsedArguments {
     character?: string;
     characters?: string;
     token?: string;
-    validate?: boolean;
+    dir?: string;
 }
 
 export interface TokenData {

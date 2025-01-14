@@ -102,6 +102,9 @@ importers:
 
   agent:
     dependencies:
+      '@0glabs/0g-ts-sdk':
+        specifier: 0.2.3
+        version: 0.2.3(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
       '@elizaos/adapter-postgres':
         specifier: workspace:*
         version: link:../packages/adapter-postgres
@@ -1949,6 +1952,11 @@ packages:
 
   '@0glabs/0g-ts-sdk@0.2.1':
     resolution: {integrity: sha512-IJRD3D+5flNZIl32k/7D45yYvn9AjMeDdkhMr4Y/qo6nFE40HqYRaSlk6ZNI+MjaRzbDxMErrFzQcVkYH/DARg==}
+    peerDependencies:
+      ethers: 6.13.1
+
+  '@0glabs/0g-ts-sdk@0.2.3':
+    resolution: {integrity: sha512-BT0LD/+QJhC40K9bs+Wd65n71MTpEYIZXQ4I2yr9n9vRMOxDGgBWi1fbiy/Wtcj1V6hvPmbq6qBkslfgwCNsrw==}
     peerDependencies:
       ethers: 6.13.1
 
@@ -19537,6 +19545,18 @@ snapshots:
       '@ethersproject/bytes': 5.7.0
       '@ethersproject/keccak256': 5.7.0
       ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      open-jsonrpc-provider: 0.2.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+
+  '@0glabs/0g-ts-sdk@0.2.3(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)':
+    dependencies:
+      '@ethersproject/bytes': 5.7.0
+      '@ethersproject/keccak256': 5.7.0
+      ethers: 6.13.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       open-jsonrpc-provider: 0.2.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil

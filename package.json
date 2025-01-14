@@ -23,7 +23,7 @@
         "test": "bash ./scripts/test.sh",
         "smokeTests": "bash ./scripts/smokeTests.sh",
         "integrationTests": "bash ./scripts/integrationTests.sh",
-        "start:agent-nft": "pnpm --filter \"@elizaos/agent-nft\" start"
+        "generate-nft": "pnpm --filter \"@elizaos/agent\" generate-nft --isRoot"
     },
     "devDependencies": {
         "@commitlint/cli": "18.6.1",

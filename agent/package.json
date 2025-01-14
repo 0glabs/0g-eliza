@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "start": "node --loader ts-node/esm src/index.ts",
+        "generate-nft": "node --loader ts-node/esm src/generateNFT.ts",
         "dev": "node --loader ts-node/esm src/index.ts",
         "check-types": "tsc --noEmit",
         "test": "jest"
@@ -66,7 +67,7 @@
         "yargs": "17.7.2",
         "@typechain/ethers-v6": "^0.5.0",
         "ethers": "6.13.1",
-        "@0glabs/0g-ts-sdk": "0.2.1"
+        "@0glabs/0g-ts-sdk": "0.2.3"
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",

@@ -99,6 +99,11 @@ export function parseArguments(): ParsedArguments {
                 type: "string",
                 description: "Comma separated list of NFT token IDs to load configuration from",
             })
+            .option("dir", {
+                type: "string",
+                description: "Base directory storing the agent data",
+                default: ""
+            })
             .parseSync();
     } catch (error) {
         elizaLogger.error("Error parsing arguments:", error);
@@ -609,15 +614,15 @@ export function checkPortAvailable(port: number): Promise<boolean> {
     });
 }
 
-export async function loadFromNFT(tokenId: string): Promise<Character[]> {
-    const agentNFTClient = new AgentNFTClient("./data");
+export async function loadFromNFT(tokenId: string, baseDir: string = ""): Promise<Character[]> {
+    const agentNFTClient = new AgentNFTClient(baseDir);
 
     const name = await agentNFTClient.getNFTName();
     elizaLogger.info(`NFT name: ${name}`);
     const symbol = await agentNFTClient.getNFTSymbol();
     elizaLogger.info(`NFT symbol: ${symbol}`);
-    const { chainURL, indexerURL } = await agentNFTClient.getTokenURI(tokenId);
-    elizaLogger.info(`Chain URL: ${chainURL}`);
+    const { rpcURL, indexerURL } = await agentNFTClient.getTokenURI(tokenId);
+    elizaLogger.info(`Rpc URL: ${rpcURL}`);
     elizaLogger.info(`Indexer URL: ${indexerURL}`);
 
 
