@@ -35,7 +35,7 @@ When starting an agent from an existing NFT:
 
 The following environment variables are required:
 
-- `ZEROG_RPC_URL`: The RPC URL of the 0G network.
+- `ZEROG_RPC_URL`: The RPC URL of the [0G](https://0g.ai/) network.
 - `ZEROG_INDEXER_RPC_URL`: The Indexer RPC URL for the [0G](https://0g.ai/) network.
 - `ZEROG_PRIVATE_KEY`: The private key of the agent owner.
 - `ZEROG_AGENT_NFT_CONTRACT_ADDRESS`: The address of the Agent NFT contract.
