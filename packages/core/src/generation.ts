@@ -53,6 +53,9 @@ import {
 import { fal } from "@fal-ai/client";
 import { tavily } from "@tavily/core";
 
+import { JsonRpcProvider, Wallet } from "ethers";
+import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
+
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
 
@@ -996,6 +999,13 @@ export async function generateText({
                 break;
             }
 
+            // 0G, call service on ZeroG compute network to generate object
+            case ModelProviderName.ZERO_G: {
+                elizaLogger.debug("Initializing ZeroG model.");
+                response = await ZgcGenerateObject(endpoint, model, context);
+                break;
+            }
+
             default: {
                 const errorMessage = `Unsupported provider: ${provider}`;
                 elizaLogger.error(errorMessage);
@@ -1925,6 +1935,13 @@ export async function handleProvider(
             return await handleOllama(options);
         case ModelProviderName.DEEPSEEK:
             return await handleDeepSeek(options);
+        // 0G
+        case ModelProviderName.ZERO_G:
+            return await generateObjectDeprecated({
+                runtime,
+                context,
+                modelClass,
+            });
         default: {
             const errorMessage = `Unsupported provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -2208,6 +2225,105 @@ async function handleDeepSeek({
         mode,
         ...modelOptions,
     });
+}
+
+// 0G: call service on ZeroG compute network to generate object
+async function ZgcGenerateObject(endpoint: string,  model: string, context: string) : Promise<string> {
+    try {
+        const wallet = new JsonRpcProvider(settings.ZEROG_RPC_URL);
+        const signer = new Wallet(settings.ZEROG_PRIVATE_KEY, wallet);
+        const broker = await createZGComputeNetworkBroker(
+            signer,
+            undefined,
+            undefined,
+            undefined,
+            12000000000
+        );
+        const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
+
+        if (!endpoint || !model) {
+            ({ endpoint, model } = await broker.inference.getServiceMetadata(
+                zgc_provider
+            ));
+        }
+
+        elizaLogger.info("zgc_endpoint", endpoint);
+        elizaLogger.info("zgc_model", model);
+
+        elizaLogger.debug("context", context);
+
+        const headers = await broker.inference.getRequestHeaders(
+            zgc_provider,
+            context
+        );
+        elizaLogger.debug("headers", headers);
+
+        const completion = await fetch(`${endpoint}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers,
+                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+                messages: [{ role: 'system', content: context }],
+                model: model,
+            }),
+        });
+        if (!completion.ok) {
+            const errorText = await completion.text();
+            elizaLogger.error("Network error calling service on ZGC:", {
+                status: completion.status,
+                statusText: completion.statusText,
+                errorText
+            });
+            throw new Error(`Network error calling service on ZGC: ${errorText}`);
+        }
+        let responseText = await completion.text();
+        elizaLogger.debug("Raw response text:", responseText);
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (jsonError) {
+            elizaLogger.error("Error parsing JSON response:", {
+                error: jsonError,
+                responseText,
+            });
+            throw new Error("Error parsing JSON response: " + jsonError.message);
+        }
+        if (result.error) {
+            elizaLogger.error("Error calling service on ZGC: ", result.error);
+            throw new Error(`Error calling service on ZGC: ${result.error}`);
+        }
+        elizaLogger.debug("result", result);
+        const response = result.choices[0]?.message?.content;
+        const chatID = result.id;
+        elizaLogger.log("response", response);
+        if (!response) {
+            elizaLogger.error("No output received from ZGC.");
+            throw new Error("No output received.");
+        }
+        try {
+            const isValid = await broker.inference.processResponse(
+                zgc_provider,
+                response,
+                chatID
+              );
+            if (!isValid) {
+                elizaLogger.error("Invalid response received from ZGC.");
+                throw new Error("Invalid response");
+            }
+        } catch (error) {
+            elizaLogger.error("Error in processResponse:", error);
+            throw error;
+        }
+        elizaLogger.log("Validate success")
+        // await broker.ledger.retrieveFund("inference");
+        return response;
+    } catch (error) {
+        elizaLogger.error("Error in ZgcGenerateObject:", error);
+        throw error;
+    }
 }
 
 // Add type definition for Together AI response

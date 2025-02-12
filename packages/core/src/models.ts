@@ -998,6 +998,32 @@ export const models: Models = {
             },
         },
     },
+    [ModelProviderName.ZERO_G]: {
+        endpoint: settings.ZEROG_COMPUTE_ENDPOINT,
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_ZEROG_COMPUTE_MODEL,
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_ZEROG_COMPUTE_MODEL,
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_ZEROG_COMPUTE_MODEL,
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            }
+        },
+    },
 };
 
 export function getModelSettings(

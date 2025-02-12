@@ -471,6 +471,11 @@ export function getTokenForProvider(
                 character.settings?.secrets?.DEEPSEEK_API_KEY ||
                 settings.DEEPSEEK_API_KEY
             );
+        case ModelProviderName.ZERO_G:
+            return (
+                character.settings?.secrets?.ZEROG_PRIVATE_KEY ||
+                settings.ZEROG_PRIVATE_KEY
+            );
         default:
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);

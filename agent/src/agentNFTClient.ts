@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, SigningKey } from 'ethers';
 import fs from 'fs';
 import path from 'path';
 import { elizaLogger, stringToUuid } from "@elizaos/core";
@@ -7,6 +7,8 @@ import { AgentNFT } from './contracts/AgentNFT';
 import { AgentNFT__factory } from './contracts/factories/AgentNFT__factory';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import SHA256 from 'crypto-js/sha256.js';
+import { createPublicClient, http, hashMessage } from 'viem'
+import { mainnet } from 'viem/chains'
 
 export class AgentNFTClient {
     private provider: ethers.Provider;
@@ -98,7 +100,11 @@ export class AgentNFTClient {
 
     async mintToken(proofs: string[], dataDescriptions: string[], tokenOwner: string): Promise<string> {
         try {
-            const tx = await this.contract.mint(proofs, dataDescriptions, tokenOwner);
+            const txOptions = {
+                gasPrice: 12000000000,
+                value: 0
+            }
+            const tx = await this.contract.mint(proofs, dataDescriptions, tokenOwner, txOptions);
             const receipt = await tx.wait();
             const mintEvent = receipt?.logs
                 .map(log => {
@@ -127,13 +133,24 @@ export class AgentNFTClient {
             const tokenOwner = tokenData.owner.toLowerCase();
             elizaLogger.info("proof", proof);
             // parse proof and verify
-            let { signature, message } = JSON.parse(proof);
-            const messageHash = "0x" + SHA256(message).toString();
-            signature = ethers.Signature.from(signature);
-            const recoveredPublicKey = ethers.SigningKey.recoverPublicKey(
-                messageHash,
-                signature
-            );
+            let { message, signature } = JSON.parse(proof);
+            elizaLogger.info("message", message);
+            elizaLogger.info("signature", signature);
+
+            const publicClient = createPublicClient({
+                chain: mainnet,
+                transport: http()
+            })
+
+            const valid = await publicClient.verifySiweMessage({
+                message: message,
+                signature: `0x${signature.replace(/^0x/, '')}`,
+            })
+
+            const hash = hashMessage(message);
+            console.log("hash:", hash)
+            // Recover the public key from the hash and the signature.
+            const recoveredPublicKey = ethers.SigningKey.recoverPublicKey(hash, signature);
             elizaLogger.info("recoveredPublicKey", recoveredPublicKey);
             const recoveredAddress = ethers.computeAddress(recoveredPublicKey);
             elizaLogger.info("recoveredAddress", recoveredAddress);
