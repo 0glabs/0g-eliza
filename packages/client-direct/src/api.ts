@@ -9,6 +9,7 @@ import {
     UUID,
     validateCharacterConfig,
     ServiceType,
+    stringToUuid,
 } from "@elizaos/core";
 
 import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
@@ -196,6 +197,8 @@ export function createApiRouter(
         try {
             const memories = await runtime.messageManager.getMemories({
                 roomId,
+                count: 20,
+                unique: false,
             });
             const response = {
                 agentId,
@@ -236,6 +239,51 @@ export function createApiRouter(
             res.status(500).json({ error: "Failed to fetch memories" });
         }
     });
+
+    router.get("/agents/:agentId/chat-history", async (req, res) => {
+        elizaLogger.log("Fetching chat history");
+
+        const { agentId } = validateUUIDParams(req.params, res) ?? { agentId: null };
+        if (!agentId) {
+            res.status(400).json({ error: "Agent ID is required" });
+            return;
+        }
+
+        const runtime = agents.get(agentId);
+        if (!runtime) {
+            res.status(404).json({ error: "Agent not found" });
+            return;
+        }
+
+        // Use req.query.roomId for GET request
+        const roomId = stringToUuid(req.query.roomId as string ?? "default-room-" + agentId);
+        elizaLogger.log("Fetching chat history for roomId:", roomId);
+
+        try {
+            const memories = await runtime.messageManager.getMemories({
+                roomId,
+                count: 20,
+                unique: false,
+            });
+
+            const response = {
+                agentId,
+                roomId,
+                messages: memories.map((memory) => ({
+                    id: memory.id,
+                    userId: memory.userId,
+                    createdAt: memory.createdAt,
+                    text: memory.content.text,
+                })),
+            };
+
+            res.json(response);
+        } catch (error) {
+            console.error("Error fetching chat history:", error);
+            res.status(500).json({ error: "Failed to fetch chat history" });
+        }
+    });
+
 
     router.get("/tee/agents", async (req, res) => {
         try {
