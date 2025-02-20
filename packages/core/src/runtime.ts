@@ -438,7 +438,7 @@ export class AgentRuntime implements IAgentRuntime {
             this.character.knowledge &&
             this.character.knowledge.length > 0
         ) {
-            if (this.character.settings.ragKnowledge) {
+            if (this.character.settings?.ragKnowledge) {
                 await this.processCharacterRAGKnowledge(
                     this.character.knowledge
                 );
