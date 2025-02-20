@@ -255,21 +255,34 @@ export function createApiRouter(
             return;
         }
 
-        // Use req.query.roomId for GET request
         const roomId = stringToUuid(req.query.roomId as string ?? "default-room-" + agentId);
         elizaLogger.log("Fetching chat history for roomId:", roomId);
+
+        const pageIndex = parseInt(req.query.pageIndex as string) || 1;
+        const pageSize = parseInt(req.query.pageSize as string) || 5;
+        elizaLogger.log("Page index:", pageIndex);
+        elizaLogger.log("Page size:", pageSize);
+        const totalCount = await runtime.messageManager.countMemories(roomId, false);
+        elizaLogger.log("Total count of memories:", totalCount);
+        const recordsToFetch = pageIndex * pageSize;
 
         try {
             const memories = await runtime.messageManager.getMemories({
                 roomId,
-                count: 20,
+                count: Math.min(recordsToFetch, totalCount),
                 unique: false,
             });
+
+            const startIdx = (pageIndex - 1) * pageSize;
+            const endIdx = pageIndex * pageSize;
+            const pageMessages = memories.slice(startIdx, endIdx);
 
             const response = {
                 agentId,
                 roomId,
-                messages: memories.map((memory) => ({
+                pageIndex,
+                pageSize,
+                messages: pageMessages.map((memory) => ({
                     id: memory.id,
                     userId: memory.userId,
                     createdAt: memory.createdAt,
