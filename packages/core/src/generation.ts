@@ -2228,7 +2228,7 @@ async function handleDeepSeek({
 }
 
 // 0G: call service on ZeroG compute network to generate object
-async function ZgcGenerateObject(endpoint: string,  model: string, context: string) : Promise<string> {
+async function ZgcGenerateObject(endpoint: string, model: string, context: string): Promise<string> {
     try {
         const wallet = new JsonRpcProvider(settings.ZEROG_RPC_URL);
         const signer = new Wallet(settings.ZEROG_PRIVATE_KEY, wallet);
@@ -2242,9 +2242,7 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
         const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
 
         if (!endpoint || !model) {
-            ({ endpoint, model } = await broker.inference.getServiceMetadata(
-                zgc_provider
-            ));
+            ({ endpoint, model } = await broker.inference.getServiceMetadata(zgc_provider));
         }
 
         elizaLogger.info("zgc_endpoint", endpoint);
@@ -2252,35 +2250,51 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
 
         elizaLogger.debug("context", context);
 
-        const headers = await broker.inference.getRequestHeaders(
-            zgc_provider,
-            context
-        );
+        const headers = await broker.inference.getRequestHeaders(zgc_provider, context);
         elizaLogger.debug("headers", headers);
 
-        const completion = await fetch(`${endpoint}/chat/completions`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...headers,
-                Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-                messages: [{ role: 'system', content: context }],
-                model: model,
-            }),
-        });
-        if (!completion.ok) {
-            const errorText = await completion.text();
-            elizaLogger.error("Network error calling service on ZGC:", {
-                status: completion.status,
-                statusText: completion.statusText,
-                errorText
+        const callApi = async (retry = false): Promise<string> => {
+            const completion = await fetch(`${endpoint}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers,
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    messages: [{ role: 'system', content: context }],
+                    model: model,
+                }),
             });
-            throw new Error(`Network error calling service on ZGC: ${errorText}`);
-        }
-        let responseText = await completion.text();
+
+            if (!completion.ok) {
+                const errorText = await completion.text();
+                elizaLogger.error("Network error calling service on ZGC:", {
+                    status: completion.status,
+                    statusText: completion.statusText,
+                    errorText,
+                });
+
+                // check if error is due to insufficient balance
+                const feeMatch = errorText.match(/expected ([\d.e-]+) A0GI/);
+                if (feeMatch && feeMatch[1] && !retry) {
+                    const fee = parseFloat(feeMatch[1]);
+                    elizaLogger.info(`Retrying after calling settleFee with fee: ${fee} A0GI`);
+
+                    // call settleFee and retry
+                    await broker.inference.settleFee(zgc_provider, fee);
+                    return await callApi(true);
+                }
+
+                return errorText;
+            }
+
+            return await completion.text();
+        };
+
+        let responseText = await callApi();
         elizaLogger.debug("Raw response text:", responseText);
+
         let result;
         try {
             result = JSON.parse(responseText);
@@ -2289,11 +2303,11 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
                 error: jsonError,
                 responseText,
             });
-            throw new Error("Error parsing JSON response: " + jsonError.message);
+            return "Error parsing JSON response: " + jsonError.message;
         }
         if (result.error) {
             elizaLogger.error("Error calling service on ZGC: ", result.error);
-            throw new Error(`Error calling service on ZGC: ${result.error}`);
+            return "Error calling service on ZGC: " + result.error;
         }
         elizaLogger.debug("result", result);
         const response = result.choices[0]?.message?.content;
@@ -2301,30 +2315,26 @@ async function ZgcGenerateObject(endpoint: string,  model: string, context: stri
         elizaLogger.log("response", response);
         if (!response) {
             elizaLogger.error("No output received from ZGC.");
-            throw new Error("No output received.");
+            return "No output received.";
         }
         try {
-            const isValid = await broker.inference.processResponse(
-                zgc_provider,
-                response,
-                chatID
-              );
+            const isValid = await broker.inference.processResponse(zgc_provider, response, chatID);
             if (!isValid) {
                 elizaLogger.error("Invalid response received from ZGC.");
-                throw new Error("Invalid response");
+                return "Invalid response";
             }
         } catch (error) {
             elizaLogger.error("Error in processResponse:", error);
-            throw error;
+            return "Error in processResponse: " + error.message;
         }
-        elizaLogger.log("Validate success")
-        // await broker.ledger.retrieveFund("inference");
+        elizaLogger.log("Validate success");
         return response;
     } catch (error) {
         elizaLogger.error("Error in ZgcGenerateObject:", error);
-        throw error;
+        return "Error in ZgcGenerateObject: " + error.message;
     }
 }
+
 
 // Add type definition for Together AI response
 interface TogetherAIImageResponse {
