@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ethers, verifyMessage } from 'ethers';
 import fs from 'fs';
 import path from 'path';
 import { elizaLogger, stringToUuid } from "@elizaos/core";
@@ -6,8 +6,6 @@ import { TokenData, AgentMetadata } from './types';
 import { AgentNFT } from './contracts/AgentNFT';
 import { AgentNFT__factory } from './contracts/factories/AgentNFT__factory';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
-import { createPublicClient, http, hashMessage } from 'viem'
-import { mainnet } from 'viem/chains'
 
 export class AgentNFTClient {
     private provider: ethers.Provider;
@@ -137,23 +135,13 @@ export class AgentNFTClient {
             elizaLogger.info("signature", signature);
             const decodedMessage = Buffer.from(message, 'base64').toString('utf-8');
             elizaLogger.info("decodedMessage:", decodedMessage);
-            const publicClient = createPublicClient({
-                chain: mainnet,
-                transport: http()
-            })
 
-            const valid = await publicClient.verifySiweMessage({
-                message: decodedMessage,
-                signature: `0x${signature.replace(/^0x/, '')}`,
-            })
-
-            const hash = hashMessage(decodedMessage);
-            elizaLogger.info("hash:", hash)
-            // Recover the public key from the hash and the signature.
-            const recoveredPublicKey = ethers.SigningKey.recoverPublicKey(hash, signature);
-            elizaLogger.info("recoveredPublicKey", recoveredPublicKey);
-            const recoveredAddress = ethers.computeAddress(recoveredPublicKey);
+            const verfiyStart = Date.now();
+            const recoveredAddress = verifyMessage(decodedMessage, signature);
             elizaLogger.info("recoveredAddress", recoveredAddress);
+            const verfiyEnd = Date.now();
+            elizaLogger.info("verifyMessage time: ", verfiyEnd - verfiyStart, "ms");
+
             elizaLogger.info("tokenOwner", tokenOwner);
             return recoveredAddress.toLowerCase() === tokenOwner.toLowerCase();
         } catch (error) {
