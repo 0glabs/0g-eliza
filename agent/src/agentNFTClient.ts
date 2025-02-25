@@ -63,10 +63,9 @@ export class AgentNFTClient {
     async getTokenURI(tokenId: string): Promise<{ rpcURL: string, indexerURL: string }> {
         try {
             const uri = await this.contract.tokenURI(tokenId);
-            let [rpcURL, indexerURL] = uri.split("\n");
-            this.rpcURL = rpcURL.replace("rpcURL: ", "");
-            this.indexerURL = indexerURL.replace("indexerURL: ", "");
-            return { rpcURL, indexerURL };
+            elizaLogger.info("tokenURI", uri);
+            let { chainURL, indexerURL } = JSON.parse(uri);
+            return { rpcURL: chainURL, indexerURL };
         } catch (error) {
             elizaLogger.error(`Failed to get token URI for token ${tokenId}:`, error);
             throw error;
@@ -140,7 +139,7 @@ export class AgentNFTClient {
             const recoveredAddress = verifyMessage(decodedMessage, signature);
             elizaLogger.info("recoveredAddress", recoveredAddress);
             const verfiyEnd = Date.now();
-            elizaLogger.info("verifyMessage time: ", verfiyEnd - verfiyStart, "ms");
+            elizaLogger.info(`verifyMessage time: ${verfiyEnd - verfiyStart} ms`);
 
             elizaLogger.info("tokenOwner", tokenOwner);
             return recoveredAddress.toLowerCase() === tokenOwner.toLowerCase();

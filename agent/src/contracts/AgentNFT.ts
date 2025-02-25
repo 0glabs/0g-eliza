@@ -26,20 +26,34 @@ import type {
 export interface AgentNFTInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "ADMIN_ROLE"
+      | "DEFAULT_ADMIN_ROLE"
+      | "VERSION"
       | "authorizeUsage"
       | "authorizedUsersOf"
       | "clone"
       | "clonePublic"
       | "dataDescriptionsOf"
       | "dataHashesOf"
+      | "getRoleAdmin"
+      | "getRoleMember"
+      | "getRoleMemberCount"
+      | "grantRole"
+      | "hasRole"
+      | "initialize"
       | "mint"
       | "name"
       | "ownerOf"
+      | "renounceRole"
+      | "revokeRole"
+      | "supportsInterface"
       | "symbol"
       | "tokenURI"
       | "transfer"
       | "transferPublic"
       | "update"
+      | "updateURLS"
+      | "updateVerifier"
       | "verifier"
   ): FunctionFragment;
 
@@ -47,12 +61,25 @@ export interface AgentNFTInterface extends Interface {
     nameOrSignatureOrTopic:
       | "AuthorizedUsage"
       | "Cloned"
+      | "Initialized"
       | "Minted"
       | "PublishedSealedKey"
+      | "RoleAdminChanged"
+      | "RoleGranted"
+      | "RoleRevoked"
       | "Transferred"
       | "Updated"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "ADMIN_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "DEFAULT_ADMIN_ROLE",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "VERSION", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "authorizeUsage",
     values: [BigNumberish, AddressLike]
@@ -63,7 +90,7 @@ export interface AgentNFTInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "clone",
-    values: [AddressLike, BigNumberish, BytesLike]
+    values: [AddressLike, BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "clonePublic",
@@ -78,6 +105,30 @@ export interface AgentNFTInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getRoleAdmin",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRoleMember",
+    values: [BytesLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRoleMemberCount",
+    values: [BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "grantRole",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasRole",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [string, string, AddressLike, string, string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "mint",
     values: [BytesLike[], string[], AddressLike]
   ): string;
@@ -86,6 +137,18 @@ export interface AgentNFTInterface extends Interface {
     functionFragment: "ownerOf",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "renounceRole",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "revokeRole",
+    values: [BytesLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "supportsInterface",
+    values: [BytesLike]
+  ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
@@ -93,7 +156,7 @@ export interface AgentNFTInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transfer",
-    values: [AddressLike, BigNumberish, BytesLike]
+    values: [AddressLike, BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "transferPublic",
@@ -103,8 +166,22 @@ export interface AgentNFTInterface extends Interface {
     functionFragment: "update",
     values: [BigNumberish, BytesLike[]]
   ): string;
+  encodeFunctionData(
+    functionFragment: "updateURLS",
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateVerifier",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "verifier", values?: undefined): string;
 
+  decodeFunctionResult(functionFragment: "ADMIN_ROLE", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "DEFAULT_ADMIN_ROLE",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "VERSION", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "authorizeUsage",
     data: BytesLike
@@ -126,9 +203,33 @@ export interface AgentNFTInterface extends Interface {
     functionFragment: "dataHashesOf",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRoleAdmin",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRoleMember",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRoleMemberCount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "renounceRole",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportsInterface",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokenURI", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
@@ -137,6 +238,11 @@ export interface AgentNFTInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "update", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "updateURLS", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "updateVerifier",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "verifier", data: BytesLike): Result;
 }
 
@@ -178,6 +284,18 @@ export namespace ClonedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace MintedEvent {
   export type InputTuple = [
     _tokenId: BigNumberish,
@@ -210,13 +328,75 @@ export namespace PublishedSealedKeyEvent {
   export type InputTuple = [
     _to: AddressLike,
     _tokenId: BigNumberish,
-    _sealedKey: BytesLike
+    _sealedKeys: BytesLike[]
   ];
-  export type OutputTuple = [_to: string, _tokenId: bigint, _sealedKey: string];
+  export type OutputTuple = [
+    _to: string,
+    _tokenId: bigint,
+    _sealedKeys: string[]
+  ];
   export interface OutputObject {
     _to: string;
     _tokenId: bigint;
-    _sealedKey: string;
+    _sealedKeys: string[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RoleAdminChangedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    previousAdminRole: BytesLike,
+    newAdminRole: BytesLike
+  ];
+  export type OutputTuple = [
+    role: string,
+    previousAdminRole: string,
+    newAdminRole: string
+  ];
+  export interface OutputObject {
+    role: string;
+    previousAdminRole: string;
+    newAdminRole: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RoleGrantedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace RoleRevokedEvent {
+  export type InputTuple = [
+    role: BytesLike,
+    account: AddressLike,
+    sender: AddressLike
+  ];
+  export type OutputTuple = [role: string, account: string, sender: string];
+  export interface OutputObject {
+    role: string;
+    account: string;
+    sender: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -307,6 +487,12 @@ export interface AgentNFT extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
+  DEFAULT_ADMIN_ROLE: TypedContractMethod<[], [string], "view">;
+
+  VERSION: TypedContractMethod<[], [string], "view">;
+
   authorizeUsage: TypedContractMethod<
     [tokenId: BigNumberish, user: AddressLike],
     [void],
@@ -320,7 +506,7 @@ export interface AgentNFT extends BaseContract {
   >;
 
   clone: TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish, proof: BytesLike],
+    [to: AddressLike, tokenId: BigNumberish, proofs: BytesLike[]],
     [bigint],
     "payable"
   >;
@@ -343,6 +529,40 @@ export interface AgentNFT extends BaseContract {
     "view"
   >;
 
+  getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
+
+  getRoleMember: TypedContractMethod<
+    [role: BytesLike, index: BigNumberish],
+    [string],
+    "view"
+  >;
+
+  getRoleMemberCount: TypedContractMethod<[role: BytesLike], [bigint], "view">;
+
+  grantRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  hasRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  initialize: TypedContractMethod<
+    [
+      name_: string,
+      symbol_: string,
+      verifierAddr: AddressLike,
+      chainURL_: string,
+      indexerURL_: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+
   mint: TypedContractMethod<
     [proofs: BytesLike[], dataDescriptions: string[], to: AddressLike],
     [bigint],
@@ -353,12 +573,30 @@ export interface AgentNFT extends BaseContract {
 
   ownerOf: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
 
+  renounceRole: TypedContractMethod<
+    [role: BytesLike, callerConfirmation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  revokeRole: TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
+
   symbol: TypedContractMethod<[], [string], "view">;
 
   tokenURI: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
 
   transfer: TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish, proof: BytesLike],
+    [to: AddressLike, tokenId: BigNumberish, proofs: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -375,12 +613,33 @@ export interface AgentNFT extends BaseContract {
     "nonpayable"
   >;
 
+  updateURLS: TypedContractMethod<
+    [newChainURL: string, newIndexerURL: string],
+    [void],
+    "nonpayable"
+  >;
+
+  updateVerifier: TypedContractMethod<
+    [newVerifier: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   verifier: TypedContractMethod<[], [string], "view">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "DEFAULT_ADMIN_ROLE"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "VERSION"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "authorizeUsage"
   ): TypedContractMethod<
@@ -394,7 +653,7 @@ export interface AgentNFT extends BaseContract {
   getFunction(
     nameOrSignature: "clone"
   ): TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish, proof: BytesLike],
+    [to: AddressLike, tokenId: BigNumberish, proofs: BytesLike[]],
     [bigint],
     "payable"
   >;
@@ -412,6 +671,46 @@ export interface AgentNFT extends BaseContract {
     nameOrSignature: "dataHashesOf"
   ): TypedContractMethod<[tokenId: BigNumberish], [string[]], "view">;
   getFunction(
+    nameOrSignature: "getRoleAdmin"
+  ): TypedContractMethod<[role: BytesLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRoleMember"
+  ): TypedContractMethod<
+    [role: BytesLike, index: BigNumberish],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRoleMemberCount"
+  ): TypedContractMethod<[role: BytesLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "grantRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "hasRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "initialize"
+  ): TypedContractMethod<
+    [
+      name_: string,
+      symbol_: string,
+      verifierAddr: AddressLike,
+      chainURL_: string,
+      indexerURL_: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "mint"
   ): TypedContractMethod<
     [proofs: BytesLike[], dataDescriptions: string[], to: AddressLike],
@@ -425,6 +724,23 @@ export interface AgentNFT extends BaseContract {
     nameOrSignature: "ownerOf"
   ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
   getFunction(
+    nameOrSignature: "renounceRole"
+  ): TypedContractMethod<
+    [role: BytesLike, callerConfirmation: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeRole"
+  ): TypedContractMethod<
+    [role: BytesLike, account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -433,7 +749,7 @@ export interface AgentNFT extends BaseContract {
   getFunction(
     nameOrSignature: "transfer"
   ): TypedContractMethod<
-    [to: AddressLike, tokenId: BigNumberish, proof: BytesLike],
+    [to: AddressLike, tokenId: BigNumberish, proofs: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -451,6 +767,16 @@ export interface AgentNFT extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "updateURLS"
+  ): TypedContractMethod<
+    [newChainURL: string, newIndexerURL: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateVerifier"
+  ): TypedContractMethod<[newVerifier: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "verifier"
   ): TypedContractMethod<[], [string], "view">;
@@ -470,6 +796,13 @@ export interface AgentNFT extends BaseContract {
     ClonedEvent.OutputObject
   >;
   getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
     key: "Minted"
   ): TypedContractEvent<
     MintedEvent.InputTuple,
@@ -482,6 +815,27 @@ export interface AgentNFT extends BaseContract {
     PublishedSealedKeyEvent.InputTuple,
     PublishedSealedKeyEvent.OutputTuple,
     PublishedSealedKeyEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleAdminChanged"
+  ): TypedContractEvent<
+    RoleAdminChangedEvent.InputTuple,
+    RoleAdminChangedEvent.OutputTuple,
+    RoleAdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleGranted"
+  ): TypedContractEvent<
+    RoleGrantedEvent.InputTuple,
+    RoleGrantedEvent.OutputTuple,
+    RoleGrantedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RoleRevoked"
+  ): TypedContractEvent<
+    RoleRevokedEvent.InputTuple,
+    RoleRevokedEvent.OutputTuple,
+    RoleRevokedEvent.OutputObject
   >;
   getEvent(
     key: "Transferred"
@@ -521,6 +875,17 @@ export interface AgentNFT extends BaseContract {
       ClonedEvent.OutputObject
     >;
 
+    "Initialized(uint64)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
     "Minted(uint256,address,address,bytes32[],string[])": TypedContractEvent<
       MintedEvent.InputTuple,
       MintedEvent.OutputTuple,
@@ -532,7 +897,7 @@ export interface AgentNFT extends BaseContract {
       MintedEvent.OutputObject
     >;
 
-    "PublishedSealedKey(address,uint256,bytes)": TypedContractEvent<
+    "PublishedSealedKey(address,uint256,bytes16[])": TypedContractEvent<
       PublishedSealedKeyEvent.InputTuple,
       PublishedSealedKeyEvent.OutputTuple,
       PublishedSealedKeyEvent.OutputObject
@@ -541,6 +906,39 @@ export interface AgentNFT extends BaseContract {
       PublishedSealedKeyEvent.InputTuple,
       PublishedSealedKeyEvent.OutputTuple,
       PublishedSealedKeyEvent.OutputObject
+    >;
+
+    "RoleAdminChanged(bytes32,bytes32,bytes32)": TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+    RoleAdminChanged: TypedContractEvent<
+      RoleAdminChangedEvent.InputTuple,
+      RoleAdminChangedEvent.OutputTuple,
+      RoleAdminChangedEvent.OutputObject
+    >;
+
+    "RoleGranted(bytes32,address,address)": TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+    RoleGranted: TypedContractEvent<
+      RoleGrantedEvent.InputTuple,
+      RoleGrantedEvent.OutputTuple,
+      RoleGrantedEvent.OutputObject
+    >;
+
+    "RoleRevoked(bytes32,address,address)": TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
+    >;
+    RoleRevoked: TypedContractEvent<
+      RoleRevokedEvent.InputTuple,
+      RoleRevokedEvent.OutputTuple,
+      RoleRevokedEvent.OutputObject
     >;
 
     "Transferred(uint256,address,address)": TypedContractEvent<
