@@ -65,7 +65,7 @@
         "typescript": "5.6.3"
     },
     "dependencies": {
-        "@0glabs/0g-serving-broker": "0.1.1-rc",
+        "@0glabs/0g-serving-broker": "0.1.2",
         "@ai-sdk/anthropic": "0.0.56",
         "@ai-sdk/google": "0.0.55",
         "@ai-sdk/google-vertex": "0.0.43",
