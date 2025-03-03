@@ -258,31 +258,57 @@ export function createApiRouter(
         const roomId = stringToUuid(req.query.roomId as string ?? "default-room-" + agentId);
         elizaLogger.log("Fetching chat history for roomId:", roomId);
 
-        const pageIndex = parseInt(req.query.pageIndex as string) || 1;
+        const cursor = req.query.cursor as UUID;
         const pageSize = parseInt(req.query.pageSize as string) || 5;
-        elizaLogger.log("Page index:", pageIndex);
+
         elizaLogger.log("Page size:", pageSize);
+        elizaLogger.log("Cursor:", cursor || "Not provided");
+
         const totalCount = await runtime.messageManager.countMemories(roomId, false);
         elizaLogger.log("Total count of memories:", totalCount);
-        const recordsToFetch = pageIndex * pageSize;
-
+        let page = [];
+        let pageWithNextCursor = [];
+        let nextCursor = null;
         try {
-            const memories = await runtime.messageManager.getMemories({
-                roomId,
-                count: Math.min(recordsToFetch, totalCount),
-                unique: false,
-            });
+            if (cursor) {
+                const startMemory = await runtime.messageManager.getMemoryById(cursor);
 
-            const startIdx = (pageIndex - 1) * pageSize;
-            const endIdx = pageIndex * pageSize;
-            const pageMessages = memories.slice(startIdx, endIdx);
+                if (!startMemory) {
+                    res.status(400).json({ error: "Memory not found" });
+                    return;
+                }
+
+                pageWithNextCursor = await runtime.messageManager.getMemories({
+                    roomId,
+                    count: pageSize + 1,
+                    unique: false,
+                    end: startMemory.createdAt,
+                });
+
+                if (pageWithNextCursor.length > 0) {
+                    nextCursor = pageWithNextCursor[pageWithNextCursor.length - 1].id;
+                }
+
+                page = pageWithNextCursor.slice(1, pageSize + 1);
+
+            } else {
+                page = await runtime.messageManager.getMemories({
+                    roomId,
+                    count: pageSize,
+                    unique: false,
+                });
+                if (page.length > 0) {
+                    nextCursor = page[page.length - 1].id;
+                }
+            }
 
             const response = {
                 agentId,
                 roomId,
-                pageIndex,
                 pageSize,
-                messages: pageMessages.map((memory) => ({
+                totalCount,
+                nextCursor,
+                messages: page.map((memory) => ({
                     id: memory.id,
                     userId: memory.userId,
                     createdAt: memory.createdAt,
