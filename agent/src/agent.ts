@@ -1000,7 +1000,7 @@ export async function startAgent(
         // start assigned clients
         runtime.clients = await initializeClients(character, runtime);
 
-        // add to container
+        // register agent
         directClient.registerAgent(runtime);
 
         // report to console

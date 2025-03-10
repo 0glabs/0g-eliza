@@ -16,6 +16,8 @@ import { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
 import { REST, Routes } from "discord.js";
 import { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
+import { AgentNFTClient } from "./agentNFTClient";
+import fs from "fs/promises";
 
 interface UUIDParams {
     agentId: UUID;
@@ -121,14 +123,56 @@ export function createApiRouter(
         }
 
         // load character from body
-        const character = req.body;
-        try {
-            validateCharacterConfig(character);
-        } catch (e) {
-            elizaLogger.error(`Error parsing character: ${e}`);
+        // {tokenId: string, proof: string, character: string}
+        let { tokenId, character } = req.body;
+        if (character) { // character is provided
+            try {
+                validateCharacterConfig(character);
+            } catch (e) {
+                elizaLogger.error(`Error parsing character: ${e}`);
+                res.status(400).json({
+                    success: false,
+                    message: e.message,
+                });
+                return;
+            }
+        } else if (tokenId) { // get character from tokenId
+            const agentNFTClient = new AgentNFTClient();
+            const name = await agentNFTClient.getNFTName();
+            elizaLogger.info(`NFT name: ${name}`);
+            const symbol = await agentNFTClient.getNFTSymbol();
+            elizaLogger.info(`NFT symbol: ${symbol}`);
+            const { rpcURL, indexerURL } = await agentNFTClient.getTokenURI(tokenId);
+            elizaLogger.info(`Rpc URL: ${rpcURL}`);
+            elizaLogger.info(`Indexer URL: ${indexerURL}`);
+
+            elizaLogger.info(`Fetching data for token[${tokenId}] from ${indexerURL}...`);
+            const tokenData = await agentNFTClient.getTokenData(tokenId);
+            elizaLogger.info(`tokenData: ${JSON.stringify(tokenData)}`);
+
+            elizaLogger.info("Downloading and saving token data...");
+            const agentMetadata = await agentNFTClient.downloadAndSaveData(tokenId, tokenData.dataHashes, tokenData.dataDescriptions);
+            elizaLogger.info("agentMetadata", agentMetadata);
+            process.env.SQLITE_FILE = agentMetadata.memory;
+
+            character = await fs.readFile(agentMetadata.character, "utf-8");
+            character = JSON.parse(character);
+            elizaLogger.info(`character: ${character}`);
+
+            try {
+                validateCharacterConfig(character);
+            } catch (e) {
+                elizaLogger.error(`Error parsing character: ${e}`);
+                res.status(400).json({
+                    success: false,
+                    message: e.message,
+                });
+                return;
+            }
+        } else {
             res.status(400).json({
                 success: false,
-                message: e.message,
+                message: "No character or tokenId and proof provided",
             });
             return;
         }
@@ -140,6 +184,26 @@ export function createApiRouter(
         res.json({
             id: character.id,
             character: character,
+        });
+    });
+
+    router.post("/agents/:agentId/delete", async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
+
+        let agent: AgentRuntime = agents.get(agentId);
+
+        if (agent) {
+            // stop agent
+            agent.stop();
+            directClient.unregisterAgent(agent);
+        }
+
+        res.json({
+            id: agent.agentId,
+            success: true,
         });
     });
 
