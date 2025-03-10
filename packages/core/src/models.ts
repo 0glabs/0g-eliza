@@ -998,6 +998,7 @@ export const models: Models = {
             },
         },
     },
+    // 0G
     [ModelProviderName.ZERO_G]: {
         endpoint: settings.ZEROG_COMPUTE_ENDPOINT,
         model: {
@@ -1022,6 +1023,32 @@ export const models: Models = {
                 maxOutputTokens: 8192,
                 temperature: 0.6,
             }
+        },
+    },
+    [ModelProviderName.ZEROG_ROUTER]: {
+        endpoint: settings.ZEROG_ROUTER_ENDPOINT || "http://47.236.74.136:1034",
+        model: {
+            [ModelClass.SMALL]: {
+                name: settings.SMALL_ZEROG_ROUTER_MODEL || "phala/llama-3.3-70b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.MEDIUM]: {
+                name: settings.MEDIUM_ZEROG_ROUTER_MODEL || "phala/llama-3.3-70b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
+            [ModelClass.LARGE]: {
+                name: settings.LARGE_ZEROG_ROUTER_MODEL || "phala/llama-3.3-70b-instruct",
+                stop: [],
+                maxInputTokens: 128000,
+                maxOutputTokens: 8192,
+                temperature: 0.6,
+            },
         },
     },
 };

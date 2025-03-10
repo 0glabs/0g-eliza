@@ -1005,6 +1005,11 @@ export async function generateText({
                 response = await ZgcGenerateObject(endpoint, model, context);
                 break;
             }
+            case ModelProviderName.ZEROG_ROUTER: {
+                elizaLogger.debug("Initializing ZeroG Router model.");
+                response = await ZgcRouterGenerateObject(endpoint, model, context);
+                break;
+            }
 
             default: {
                 const errorMessage = `Unsupported provider: ${provider}`;
@@ -1942,6 +1947,12 @@ export async function handleProvider(
                 context,
                 modelClass,
             });
+        case ModelProviderName.ZEROG_ROUTER:
+            return await generateObjectDeprecated({
+                runtime,
+                context,
+                modelClass,
+            });
         default: {
             const errorMessage = `Unsupported provider: ${provider}`;
             elizaLogger.error(errorMessage);
@@ -2335,6 +2346,28 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
     }
 }
 
+async function ZgcRouterGenerateObject(endpoint: string, model: string, context: string): Promise<string> {
+    elizaLogger.info(`ZGC router endpoint: ${endpoint}`);
+    elizaLogger.info(`ZGC router model: ${model}`);
+    try {
+        const response = await fetch(`${endpoint}/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                messages: [{ role: 'system', content: context }],
+                model: model,
+            }),
+        });
+        const data = await response.json();
+        elizaLogger.debug(`ZgcRouterGenerateObject data: ${JSON.stringify(data)}`);
+        return data.choices[0].message.content;
+    } catch (error) {
+        elizaLogger.error("Error in ZgcRouterGenerateObject:", error);
+        return "Error in ZgcRouterGenerateObject: " + error.message;
+    }
+}
 
 // Add type definition for Together AI response
 interface TogetherAIImageResponse {

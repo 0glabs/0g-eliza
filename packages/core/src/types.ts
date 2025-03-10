@@ -231,6 +231,7 @@ export type Models = {
     [ModelProviderName.INFERA]: Model;
     // 0G model
     [ModelProviderName.ZERO_G]: Model;
+    [ModelProviderName.ZEROG_ROUTER]: Model;
 };
 
 /**
@@ -267,7 +268,8 @@ export enum ModelProviderName {
     DEEPSEEK="deepseek",
     INFERA="infera",
     // 0G
-    ZERO_G = "zero_g"
+    ZERO_G = "zero_g",
+    ZEROG_ROUTER = "zerog_router",
 }
 
 /**
