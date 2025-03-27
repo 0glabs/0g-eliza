@@ -113,8 +113,8 @@ importers:
   agent:
     dependencies:
       '@0glabs/0g-ts-sdk':
-        specifier: 0.2.3
-        version: 0.2.3(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
+        specifier: 0.2.8
+        version: 0.2.8(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@elizaos/adapter-pglite':
         specifier: workspace:*
         version: link:../packages/adapter-pglite
@@ -744,8 +744,8 @@ importers:
   packages/client-direct:
     dependencies:
       '@0glabs/0g-ts-sdk':
-        specifier: 0.2.3
-        version: 0.2.3(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
+        specifier: 0.2.8
+        version: 0.2.8(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
@@ -2958,8 +2958,8 @@ packages:
     peerDependencies:
       ethers: 6.13.1
 
-  '@0glabs/0g-ts-sdk@0.2.3':
-    resolution: {integrity: sha512-BT0LD/+QJhC40K9bs+Wd65n71MTpEYIZXQ4I2yr9n9vRMOxDGgBWi1fbiy/Wtcj1V6hvPmbq6qBkslfgwCNsrw==}
+  '@0glabs/0g-ts-sdk@0.2.8':
+    resolution: {integrity: sha512-FuZBhaAMUPkQPCPOThQGvoCus9zBoPiuipYStVrnLSCkgGSn6gHUd3fqeHcJRknMOq1k5tLETEZaAkvkV5pJTg==}
     peerDependencies:
       ethers: 6.13.1
 
@@ -22644,6 +22644,7 @@ packages:
   yaeti@0.0.6:
     resolution: {integrity: sha512-MvQa//+KcZCUkBTIC9blM+CU9J2GzuTytsOUwf2lidtvkx/6gnEp1QvJv34t9vdjhFmha/mUiNDbN0D0mJWdug==}
     engines: {node: '>=0.10.32'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
@@ -22808,7 +22809,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@0glabs/0g-ts-sdk@0.2.3(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
+  '@0glabs/0g-ts-sdk@0.2.8(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
     dependencies:
       '@ethersproject/bytes': 5.7.0
       '@ethersproject/keccak256': 5.7.0
@@ -22820,7 +22821,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@0glabs/0g-ts-sdk@0.2.3(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
+  '@0glabs/0g-ts-sdk@0.2.8(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
     dependencies:
       '@ethersproject/bytes': 5.7.0
       '@ethersproject/keccak256': 5.7.0

@@ -107,6 +107,7 @@ export function createApiRouter(
     });
 
     router.post("/agents/:agentId/set", async (req, res) => {
+        elizaLogger.info(`Reset agent start`);
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
         };
@@ -121,9 +122,10 @@ export function createApiRouter(
             directClient.unregisterAgent(agent);
             // if it has a different name, the agentId will change
         }
-
+        elizaLogger.info(`Old agent ${agentId} stopped`);
         // load character from body
         // {tokenId: string, proof: string, character: string}
+        elizaLogger.info(`New agent with tokenId: ${req.body.tokenId} start`);
         let { tokenId, character } = req.body;
         if (character) { // character is provided
             try {
@@ -188,11 +190,12 @@ export function createApiRouter(
     });
 
     router.post("/agents/:agentId/delete", async (req, res) => {
+        elizaLogger.info(`Delete agent start`);
         const { agentId } = validateUUIDParams(req.params, res) ?? {
             agentId: null,
         };
         if (!agentId) return;
-
+        elizaLogger.info(`Delete agent ${agentId}`);
         let agent: AgentRuntime = agents.get(agentId);
 
         if (agent) {

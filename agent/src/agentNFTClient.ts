@@ -14,9 +14,11 @@ export class AgentNFTClient {
     private baseDir: string;
     private rpcURL: string;
     private indexerURL: string;
+    private maxRetries: number = 3;
 
-    constructor(baseDir: string = "") {
+    constructor(baseDir: string = "", maxRetries: number = 3) {
         this.baseDir = baseDir;
+        this.maxRetries = maxRetries;
 
         this.rpcURL = process.env.ZEROG_RPC_URL;
         this.indexerURL = process.env.ZEROG_INDEXER_RPC_URL;
@@ -40,58 +42,79 @@ export class AgentNFTClient {
         }
     }
 
-    async getNFTName(): Promise<string> {
-        try {
-            const name = await this.contract.name();
-            return name;
-        } catch (error) {
-            elizaLogger.error(`Failed to get NFT name:`, error);
-            throw error;
+    private async retryOperation<T>(operation: () => Promise<T>, errorMessage: string): Promise<T> {
+        let retries = 0;
+        let lastError: any;
+
+        while (retries < this.maxRetries) {
+            try {
+                return await operation();
+            } catch (error) {
+                lastError = error;
+                retries++;
+
+                if (retries >= this.maxRetries) {
+                    break;
+                }
+
+                const delay = Math.pow(2, retries) * 1000; // Exponential backoff: 2s, 4s, 8s...
+                elizaLogger.warn(`${errorMessage} Retrying (${retries}/${this.maxRetries}) after ${delay}ms...`, error);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
         }
+
+        elizaLogger.error(`${errorMessage} All ${this.maxRetries} retry attempts failed.`, lastError);
+        throw lastError;
+    }
+
+    async getNFTName(): Promise<string> {
+        return this.retryOperation(
+            async () => await this.contract.name(),
+            'Failed to get NFT name:'
+        );
     }
 
     async getNFTSymbol(): Promise<string> {
-        try {
-            const symbol = await this.contract.symbol();
-            return symbol;
-        } catch (error) {
-            elizaLogger.error(`Failed to get NFT symbol:`, error);
-            throw error;
-        }
+        return this.retryOperation(
+            async () => await this.contract.symbol(),
+            'Failed to get NFT symbol:'
+        );
     }
+
 
     async getTokenURI(tokenId: string): Promise<{ rpcURL: string, indexerURL: string }> {
-        try {
-            const uri = await this.contract.tokenURI(tokenId);
-            elizaLogger.info("tokenURI", uri);
-            let { chainURL, indexerURL } = JSON.parse(uri);
-            return { rpcURL: chainURL, indexerURL };
-        } catch (error) {
-            elizaLogger.error(`Failed to get token URI for token ${tokenId}:`, error);
-            throw error;
-        }
+        return this.retryOperation(
+            async () => {
+                const uri = await this.contract.tokenURI(tokenId);
+                elizaLogger.info("tokenURI", uri);
+                let { chainURL, indexerURL } = JSON.parse(uri);
+                return { rpcURL: chainURL, indexerURL };
+            },
+            `Failed to get token URI for token ${tokenId}:`
+        );
     }
 
-    async getTokenData(tokenId: string): Promise<TokenData> {
-        try {
-            const [owner, dataHashes, dataDescriptions, authorizedUsers] = await Promise.all([
-                this.contract.ownerOf(tokenId),
-                this.contract.dataHashesOf(tokenId),
-                this.contract.dataDescriptionsOf(tokenId),
-                this.contract.authorizedUsersOf(tokenId)
-            ]);
 
-            return {
-                tokenId,
-                owner,
-                dataHashes,
-                dataDescriptions,
-                authorizedUsers
-            };
-        } catch (error) {
-            elizaLogger.error(`Failed to fetch token data for token ${tokenId}:`, error);
-            throw error;
-        }
+    async getTokenData(tokenId: string): Promise<TokenData> {
+        return this.retryOperation(
+            async () => {
+                const [owner, dataHashes, dataDescriptions, authorizedUsers] = await Promise.all([
+                    this.contract.ownerOf(tokenId),
+                    this.contract.dataHashesOf(tokenId),
+                    this.contract.dataDescriptionsOf(tokenId),
+                    this.contract.authorizedUsersOf(tokenId)
+                ]);
+
+                return {
+                    tokenId,
+                    owner,
+                    dataHashes,
+                    dataDescriptions,
+                    authorizedUsers
+                };
+            },
+            `Failed to fetch token data for token ${tokenId}:`
+        );
     }
 
     async mintToken(proofs: string[], dataDescriptions: string[], tokenOwner: string): Promise<string> {
