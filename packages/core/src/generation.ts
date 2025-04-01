@@ -55,6 +55,7 @@ import { tavily } from "@tavily/core";
 
 import { JsonRpcProvider, Wallet } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
+import { ChatCompletionChunk } from "openai/resources/index.mjs";
 
 type Tool = CoreTool<any, any>;
 type StepResult = AIStepResult<any>;
@@ -173,8 +174,12 @@ async function truncateTiktoken(
  * @param provider The model provider name
  * @returns The Cloudflare Gateway base URL if enabled, undefined otherwise
  */
-function getCloudflareGatewayBaseURL(runtime: IAgentRuntime, provider: string): string | undefined {
-    const isCloudflareEnabled = runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
+function getCloudflareGatewayBaseURL(
+    runtime: IAgentRuntime,
+    provider: string
+): string | undefined {
+    const isCloudflareEnabled =
+        runtime.getSetting("CLOUDFLARE_GW_ENABLED") === "true";
     const cloudflareAccountId = runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID");
     const cloudflareGatewayId = runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID");
 
@@ -182,7 +187,7 @@ function getCloudflareGatewayBaseURL(runtime: IAgentRuntime, provider: string): 
         isEnabled: isCloudflareEnabled,
         hasAccountId: !!cloudflareAccountId,
         hasGatewayId: !!cloudflareGatewayId,
-        provider: provider
+        provider: provider,
     });
 
     if (!isCloudflareEnabled) {
@@ -191,12 +196,16 @@ function getCloudflareGatewayBaseURL(runtime: IAgentRuntime, provider: string): 
     }
 
     if (!cloudflareAccountId) {
-        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set");
+        elizaLogger.warn(
+            "Cloudflare Gateway is enabled but CLOUDFLARE_AI_ACCOUNT_ID is not set"
+        );
         return undefined;
     }
 
     if (!cloudflareGatewayId) {
-        elizaLogger.warn("Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set");
+        elizaLogger.warn(
+            "Cloudflare Gateway is enabled but CLOUDFLARE_AI_GATEWAY_ID is not set"
+        );
         return undefined;
     }
 
@@ -205,7 +214,7 @@ function getCloudflareGatewayBaseURL(runtime: IAgentRuntime, provider: string): 
         provider,
         baseURL,
         accountId: cloudflareAccountId,
-        gatewayId: cloudflareGatewayId
+        gatewayId: cloudflareGatewayId,
     });
 
     return baseURL;
@@ -295,9 +304,13 @@ export async function generateText({
         hasRuntime: !!runtime,
         runtimeSettings: {
             CLOUDFLARE_GW_ENABLED: runtime.getSetting("CLOUDFLARE_GW_ENABLED"),
-            CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID"),
-            CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID")
-        }
+            CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting(
+                "CLOUDFLARE_AI_ACCOUNT_ID"
+            ),
+            CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting(
+                "CLOUDFLARE_AI_GATEWAY_ID"
+            ),
+        },
     });
 
     const endpoint =
@@ -417,8 +430,11 @@ export async function generateText({
             case ModelProviderName.TOGETHER:
             case ModelProviderName.NINETEEN_AI:
             case ModelProviderName.AKASH_CHAT_API: {
-                elizaLogger.debug("Initializing OpenAI model with Cloudflare check");
-                const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || endpoint;
+                elizaLogger.debug(
+                    "Initializing OpenAI model with Cloudflare check"
+                );
+                const baseURL =
+                    getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
 
                 //elizaLogger.debug("OpenAI baseURL result:", { baseURL });
                 const openai = createOpenAI({
@@ -491,7 +507,10 @@ export async function generateText({
                 const { text: openaiResponse } = await aiGenerateText({
                     model: openai.languageModel(model),
                     prompt: context,
-                    system: runtime.character.system ?? settings.SYSTEM_PROMPT ?? undefined,
+                    system:
+                        runtime.character.system ??
+                        settings.SYSTEM_PROMPT ??
+                        undefined,
                     temperature: temperature,
                     maxTokens: max_response_length,
                     frequencyPenalty: frequency_penalty,
@@ -553,11 +572,19 @@ export async function generateText({
             }
 
             case ModelProviderName.ANTHROPIC: {
-                elizaLogger.debug("Initializing Anthropic model with Cloudflare check");
-                const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic') || "https://api.anthropic.com/v1";
+                elizaLogger.debug(
+                    "Initializing Anthropic model with Cloudflare check"
+                );
+                const baseURL =
+                    getCloudflareGatewayBaseURL(runtime, "anthropic") ||
+                    "https://api.anthropic.com/v1";
                 elizaLogger.debug("Anthropic baseURL result:", { baseURL });
 
-                const anthropic = createAnthropic({ apiKey, baseURL, fetch: runtime.fetch });
+                const anthropic = createAnthropic({
+                    apiKey,
+                    baseURL,
+                    fetch: runtime.fetch,
+                });
                 const { text: anthropicResponse } = await aiGenerateText({
                     model: anthropic.languageModel(model),
                     prompt: context,
@@ -645,10 +672,16 @@ export async function generateText({
             }
 
             case ModelProviderName.GROQ: {
-                elizaLogger.debug("Initializing Groq model with Cloudflare check");
-                const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+                elizaLogger.debug(
+                    "Initializing Groq model with Cloudflare check"
+                );
+                const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
                 elizaLogger.debug("Groq baseURL result:", { baseURL });
-                const groq = createGroq({ apiKey, fetch: runtime.fetch, baseURL });
+                const groq = createGroq({
+                    apiKey,
+                    fetch: runtime.fetch,
+                    baseURL,
+                });
 
                 const { text: groqResponse } = await aiGenerateText({
                     model: groq.languageModel(model),
@@ -1007,7 +1040,11 @@ export async function generateText({
             }
             case ModelProviderName.ZEROG_ROUTER: {
                 elizaLogger.debug("Initializing ZeroG Router model.");
-                response = await ZgcRouterGenerateObject(endpoint, model, context);
+                response = await ZgcRouterGenerateObject(
+                    endpoint,
+                    model,
+                    context
+                );
                 break;
             }
 
@@ -1019,6 +1056,117 @@ export async function generateText({
         }
 
         return response;
+    } catch (error) {
+        elizaLogger.error("Error in generateText:", error);
+        throw error;
+    }
+}
+
+/**
+ * Generates text using the specified model and context.
+ * @param opts - The options for the generateText request
+ * @param opts.context The context to generate text from
+ * @param opts.modelClass The model class to use for generation
+ * @returns Promise resolving to the generated text
+ */
+export async function generateStreamText({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+}): Promise<AsyncIterable<ChatCompletionChunk>> {
+    if (!context) {
+        console.error("generateText context is empty");
+        return;
+    }
+
+    elizaLogger.log("Generating text...");
+
+    elizaLogger.log("Using provider:", runtime.modelProvider);
+
+    const provider = runtime.modelProvider;
+    elizaLogger.debug("Provider settings:", {
+        provider,
+        hasRuntime: !!runtime,
+        runtimeSettings: {
+            CLOUDFLARE_GW_ENABLED: runtime.getSetting("CLOUDFLARE_GW_ENABLED"),
+            CLOUDFLARE_AI_ACCOUNT_ID: runtime.getSetting(
+                "CLOUDFLARE_AI_ACCOUNT_ID"
+            ),
+            CLOUDFLARE_AI_GATEWAY_ID: runtime.getSetting(
+                "CLOUDFLARE_AI_GATEWAY_ID"
+            ),
+        },
+    });
+
+    const endpoint =
+        runtime.character.modelEndpointOverride || getEndpoint(provider);
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const model = modelSettings.name;
+
+    elizaLogger.info("Selected model in stream:", model);
+
+    const modelConfiguration = runtime.character?.settings?.modelConfig;
+    const temperature =
+        modelConfiguration?.temperature || modelSettings.temperature;
+    const max_context_length =
+        modelConfiguration?.maxInputTokens || modelSettings.maxInputTokens;
+    const max_response_length =
+        modelConfiguration?.max_response_length ||
+        modelSettings.maxOutputTokens;
+
+    const apiKey = runtime.token;
+
+    try {
+        elizaLogger.debug(
+            `Trimming context to max length of ${max_context_length} tokens.`
+        );
+
+        context = await trimTokens(context, max_context_length, runtime);
+
+        elizaLogger.debug(
+            `Using provider: ${provider}, model: ${model}, temperature: ${temperature}, max response length: ${max_response_length}`
+        );
+
+        switch (provider) {
+            case ModelProviderName.OPENAI:
+            case ModelProviderName.ZEROG_ROUTER: {
+                elizaLogger.debug(
+                    "Initializing OpenAI model with Cloudflare check"
+                );
+                console.log("endpoint", endpoint);
+                let baseURL =
+                    getCloudflareGatewayBaseURL(runtime, "openai") || endpoint;
+
+                console.log("baseURL", baseURL);
+                console.log("apiKey", apiKey);
+                console.log("model", model);
+
+                if (!endpoint.endsWith("v1")) {
+                    baseURL = endpoint + "/v1";
+                }
+
+                const openai = new OpenAI({
+                    baseURL,
+                    apiKey,
+                });
+
+                return openai.chat.completions.create({
+                    messages: [{ role: "system", content: context }],
+                    model: model,
+                    stream: true,
+                });
+            }
+
+            default: {
+                const errorMessage = `Unsupported provider: ${provider}`;
+                elizaLogger.error(errorMessage);
+                throw new Error(errorMessage);
+            }
+        }
     } catch (error) {
         elizaLogger.error("Error in generateText:", error);
         throw error;
@@ -1327,6 +1475,49 @@ export async function generateMessageResponse({
             }
 
             return parsedContent;
+        } catch (error) {
+            elizaLogger.error("ERROR:", error);
+            // wait for 2 seconds
+            retryLength *= 2;
+            await new Promise((resolve) => setTimeout(resolve, retryLength));
+            elizaLogger.debug("Retrying...");
+        }
+    }
+}
+/**
+ * Generates a stream of message responses using the specified model and context.
+ * @param opts - The options for the generateStreamMessageResponse request
+ * @param opts.runtime The runtime environment for the agent
+ * @param opts.context The context to generate message responses from
+ * @param opts.modelClass The model class to use for generation
+ * @returns Promise resolving to an async iterable of ChatCompletionChunk objects
+ */
+export async function generateStreamMessageResponse({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+}): Promise<AsyncIterable<ChatCompletionChunk>> {
+    const modelSettings = getModelSettings(runtime.modelProvider, modelClass);
+    const max_context_length = modelSettings.maxInputTokens;
+
+    context = await trimTokens(context, max_context_length, runtime);
+    elizaLogger.debug("Context:", context);
+    let retryLength = 1000; // exponential backoff
+    while (true) {
+        try {
+            elizaLogger.log("Generating message response..");
+
+            const response = await generateStreamText({
+                runtime,
+                context,
+                modelClass,
+            });
+
+            return response;
         } catch (error) {
             elizaLogger.error("ERROR:", error);
             // wait for 2 seconds
@@ -1977,7 +2168,9 @@ async function handleOpenAI({
     provider: _provider,
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
-    const baseURL = getCloudflareGatewayBaseURL(runtime, 'openai') || models.openai.endpoint;
+    const baseURL =
+        getCloudflareGatewayBaseURL(runtime, "openai") ||
+        models.openai.endpoint;
     const openai = createOpenAI({ apiKey, baseURL });
     return await aiGenerateObject({
         model: openai.languageModel(model),
@@ -2006,7 +2199,7 @@ async function handleAnthropic({
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Anthropic request with Cloudflare check");
-    const baseURL = getCloudflareGatewayBaseURL(runtime, 'anthropic');
+    const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
     elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
 
     const anthropic = createAnthropic({ apiKey, baseURL });
@@ -2063,7 +2256,7 @@ async function handleGroq({
     runtime,
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Groq request with Cloudflare check");
-    const baseURL = getCloudflareGatewayBaseURL(runtime, 'groq');
+    const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
     elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
 
     const groq = createGroq({ apiKey, baseURL });
@@ -2239,7 +2432,11 @@ async function handleDeepSeek({
 }
 
 // 0G: call service on ZeroG compute network to generate object
-async function ZgcGenerateObject(endpoint: string, model: string, context: string): Promise<string> {
+async function ZgcGenerateObject(
+    endpoint: string,
+    model: string,
+    context: string
+): Promise<string> {
     try {
         const wallet = new JsonRpcProvider(settings.ZEROG_RPC_URL);
         const signer = new Wallet(settings.ZEROG_PRIVATE_KEY, wallet);
@@ -2253,7 +2450,8 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
         const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
 
         if (!endpoint || !model) {
-            ({ endpoint, model } = await broker.inference.getServiceMetadata(zgc_provider));
+            ({ endpoint, model } =
+                await broker.inference.getServiceMetadata(zgc_provider));
         }
 
         elizaLogger.info("zgc_endpoint", endpoint);
@@ -2261,19 +2459,22 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
 
         elizaLogger.debug("context", context);
 
-        const headers = await broker.inference.getRequestHeaders(zgc_provider, context);
+        const headers = await broker.inference.getRequestHeaders(
+            zgc_provider,
+            context
+        );
         elizaLogger.debug("headers", headers);
 
         const callApi = async (retry = false): Promise<string> => {
             const completion = await fetch(`${endpoint}/chat/completions`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                     ...headers,
                     Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
                 },
                 body: JSON.stringify({
-                    messages: [{ role: 'system', content: context }],
+                    messages: [{ role: "system", content: context }],
                     model: model,
                 }),
             });
@@ -2290,7 +2491,9 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
                 const feeMatch = errorText.match(/expected ([\d.e-]+) A0GI/);
                 if (feeMatch && feeMatch[1] && !retry) {
                     const fee = parseFloat(feeMatch[1]);
-                    elizaLogger.info(`Retrying after calling settleFee with fee: ${fee} A0GI`);
+                    elizaLogger.info(
+                        `Retrying after calling settleFee with fee: ${fee} A0GI`
+                    );
 
                     // call settleFee and retry
                     await broker.inference.settleFee(zgc_provider, fee);
@@ -2303,7 +2506,7 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
             return await completion.text();
         };
 
-        let responseText = await callApi();
+        const responseText = await callApi();
         elizaLogger.debug("Raw response text:", responseText);
 
         let result;
@@ -2329,7 +2532,11 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
             return "No output received.";
         }
         try {
-            const isValid = await broker.inference.processResponse(zgc_provider, response, chatID);
+            const isValid = await broker.inference.processResponse(
+                zgc_provider,
+                response,
+                chatID
+            );
             if (!isValid) {
                 elizaLogger.error("Invalid response received from ZGC.");
                 return "Invalid response";
@@ -2346,22 +2553,28 @@ async function ZgcGenerateObject(endpoint: string, model: string, context: strin
     }
 }
 
-async function ZgcRouterGenerateObject(endpoint: string, model: string, context: string): Promise<string> {
+async function ZgcRouterGenerateObject(
+    endpoint: string,
+    model: string,
+    context: string
+): Promise<string> {
     elizaLogger.info(`ZGC router endpoint: ${endpoint}`);
     elizaLogger.info(`ZGC router model: ${model}`);
     try {
         const response = await fetch(`${endpoint}/v1/chat/completions`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                messages: [{ role: 'system', content: context }],
+                messages: [{ role: "system", content: context }],
                 model: model,
             }),
         });
         const data = await response.json();
-        elizaLogger.debug(`ZgcRouterGenerateObject data: ${JSON.stringify(data)}`);
+        elizaLogger.debug(
+            `ZgcRouterGenerateObject data: ${JSON.stringify(data)}`
+        );
         return data.choices[0].message.content;
     } catch (error) {
         elizaLogger.error("Error in ZgcRouterGenerateObject:", error);

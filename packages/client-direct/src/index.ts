@@ -13,6 +13,7 @@ import {
     getEmbeddingZeroVector,
     composeContext,
     generateMessageResponse,
+    generateStreamMessageResponse,
     generateObject,
     Content,
     Memory,
@@ -74,6 +75,29 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 
 # Instructions: Write the next message for {{agentName}}.
 ` + messageCompletionFooter;
+
+export const chatHandlerTemplate =
+    // {{goals}}
+    // "# Action Examples" is already included
+    `{{actionExamples}}
+(Action examples are for reference only. Do not use the information from them in your response.)
+
+# Knowledge
+{{knowledge}}
+
+# Task: Generate dialog for the character {{agentName}}.
+About {{agentName}}:
+{{bio}}
+{{lore}}
+
+{{providers}}
+
+{{messageDirections}}
+
+{{recentMessages}}
+
+# Instructions: Generate the next message as {{agentName}}.
+`;
 
 export const hyperfiHandlerTemplate = `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
@@ -346,6 +370,137 @@ export class DirectClient {
         );
 
         this.app.post(
+            "/:agentId/chat",
+            upload.single("file"),
+            async (req: express.Request, res: express.Response) => {
+                const agentId = req.params.agentId;
+                const roomId = stringToUuid(
+                    req.body.roomId ?? "default-room-" + agentId
+                );
+                const userId = stringToUuid(req.body.userId ?? "user");
+
+                let runtime = this.agents.get(agentId);
+
+                // if runtime is null, look for runtime with the same name
+                if (!runtime) {
+                    runtime = Array.from(this.agents.values()).find(
+                        (a) =>
+                            a.character.name.toLowerCase() ===
+                            agentId.toLowerCase()
+                    );
+                }
+
+                if (!runtime) {
+                    res.status(404).send("Agent not found");
+                    return;
+                }
+
+                await runtime.ensureConnection(
+                    userId,
+                    roomId,
+                    req.body.userName,
+                    req.body.name,
+                    "direct"
+                );
+
+                const text = req.body.text;
+                if (!text) {
+                    res.json([]);
+                    return;
+                }
+
+                const messageId = stringToUuid(Date.now().toString());
+
+                const content: Content = {
+                    text,
+                    attachments: [],
+                    source: "direct",
+                    inReplyTo: undefined,
+                };
+
+                const userMessage = {
+                    content,
+                    userId,
+                    roomId,
+                    agentId: runtime.agentId,
+                };
+
+                const memory: Memory = {
+                    id: stringToUuid(messageId + "-" + userId),
+                    ...userMessage,
+                    agentId: runtime.agentId,
+                    userId,
+                    roomId,
+                    content,
+                    createdAt: Date.now(),
+                };
+
+                await runtime.messageManager.addEmbeddingToMemory(memory);
+                await runtime.messageManager.createMemory(memory);
+
+                const state = await runtime.composeState(userMessage, {
+                    agentName: runtime.character.name,
+                });
+
+                const context = composeContext({
+                    state,
+                    template: chatHandlerTemplate,
+                });
+
+                const responseStream = await generateStreamMessageResponse({
+                    runtime: runtime,
+                    context,
+                    modelClass: ModelClass.LARGE,
+                });
+
+                if (!responseStream) {
+                    res.status(500).send(
+                        "No response from generateMessageResponse"
+                    );
+                    return;
+                }
+
+                res.setHeader("Content-Type", "application/json");
+                res.setHeader("Transfer-Encoding", "chunked");
+                let fullResponse = "";
+                try {
+                    for await (const chunk of responseStream) {
+                        const chunkString = JSON.stringify(chunk);
+                        const parsedChunk = JSON.parse(chunkString);
+                        if (
+                            parsedChunk.choices &&
+                            parsedChunk.choices[0].delta &&
+                            parsedChunk.choices[0].delta.content
+                        ) {
+                            fullResponse +=
+                                parsedChunk.choices[0].delta.content;
+                            res.write(parsedChunk.choices[0].delta.content);
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error during streaming", err);
+                } finally {
+                    res.end();
+
+                    const responseMessage: Memory = {
+                        id: stringToUuid(messageId + "-" + runtime.agentId),
+                        ...userMessage,
+                        userId: runtime.agentId,
+                        content: {
+                            text: fullResponse,
+                            attachments: [],
+                            source: "direct",
+                        },
+                        embedding: getEmbeddingZeroVector(),
+                        createdAt: Date.now(),
+                    };
+
+                    await runtime.messageManager.createMemory(responseMessage);
+                }
+            }
+        );
+
+        this.app.post(
             "/agents/:agentIdOrName/hyperfi/v1",
             async (req: express.Request, res: express.Response) => {
                 // get runtime
@@ -550,16 +705,20 @@ export class DirectClient {
                         content: contentObj,
                     };
 
-                    runtime.messageManager.createMemory(responseMessage).then(() => {
-                          const messageId = stringToUuid(Date.now().toString());
-                          const memory: Memory = {
-                              id: messageId,
-                              agentId: runtime.agentId,
-                              userId,
-                              roomId,
-                              content,
-                              createdAt: Date.now(),
-                          };
+                    runtime.messageManager
+                        .createMemory(responseMessage)
+                        .then(() => {
+                            const messageId = stringToUuid(
+                                Date.now().toString()
+                            );
+                            const memory: Memory = {
+                                id: messageId,
+                                agentId: runtime.agentId,
+                                userId,
+                                roomId,
+                                content,
+                                createdAt: Date.now(),
+                            };
 
                           // run evaluators (generally can be done in parallel with processActions)
                           // can an evaluator modify memory? it could but currently doesn't
