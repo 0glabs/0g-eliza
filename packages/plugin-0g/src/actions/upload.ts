@@ -10,13 +10,12 @@ import {
     generateObject,
     elizaLogger,
 } from "@elizaos/core";
-import { Indexer, ZgFile, getFlowContract } from "@0glabs/0g-ts-sdk";
+import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
 import { ethers } from "ethers";
 import { composeContext } from "@elizaos/core";
 import { promises as fs } from "fs";
 import { FileSecurityValidator } from "../utils/security";
 import { logSecurityEvent, monitorUpload, monitorFileValidation, monitorCleanup } from '../utils/monitoring';
-import path from 'path';
 import { uploadTemplate } from "../templates/upload";
 import { z } from 'zod';
 
@@ -49,26 +48,24 @@ export const zgUpload: Action = {
 
         try {
             const settings = {
-                indexerRpc: runtime.getSetting("ZEROG_INDEXER_RPC"),
-                evmRpc: runtime.getSetting("ZEROG_EVM_RPC"),
-                privateKey: runtime.getSetting("ZEROG_PRIVATE_KEY"),
-                flowAddr: runtime.getSetting("ZEROG_FLOW_ADDRESS")
+                indexerRpc: runtime.getSetting("ZEROG_INDEXER_RPC_URL"),
+                evmRpc: runtime.getSetting("ZEROG_RPC_URL"),
+                privateKey: runtime.getSetting("ZEROG_PRIVATE_KEY")
             };
 
             elizaLogger.debug("Checking ZeroG settings", {
                 hasIndexerRpc: Boolean(settings.indexerRpc),
                 hasEvmRpc: Boolean(settings.evmRpc),
-                hasPrivateKey: Boolean(settings.privateKey),
-                hasFlowAddr: Boolean(settings.flowAddr)
+                hasPrivateKey: Boolean(settings.privateKey)
             });
 
             const hasRequiredSettings = Object.entries(settings).every(([key, value]) => Boolean(value));
-            
+
             if (!hasRequiredSettings) {
                 const missingSettings = Object.entries(settings)
                     .filter(([_, value]) => !value)
                     .map(([key]) => key);
-                
+
                 elizaLogger.error("Missing required ZeroG settings", {
                     missingSettings,
                     messageId: message.id
@@ -155,8 +152,8 @@ export const zgUpload: Action = {
                 context: uploadContext,
                 modelClass: ModelClass.LARGE,
                 schema: z.object({
-                        filePath: z.string(), 
-                        description: z.string(), 
+                        filePath: z.string(),
+                        description: z.string(),
                     }),
             });
 
@@ -369,22 +366,25 @@ export const zgUpload: Action = {
 
                 // Initialize blockchain connection
                 elizaLogger.debug("Initializing blockchain connection");
-                const provider = new ethers.JsonRpcProvider(runtime.getSetting("ZEROG_EVM_RPC"));
+                const provider = new ethers.JsonRpcProvider(runtime.getSetting("ZEROG_RPC_URL"));
                 const signer = new ethers.Wallet(runtime.getSetting("ZEROG_PRIVATE_KEY"), provider);
-                const indexer = new Indexer(runtime.getSetting("ZEROG_INDEXER_RPC"));
-                const flowContract = getFlowContract(runtime.getSetting("ZEROG_FLOW_ADDRESS"), signer);
+                const indexer = new Indexer(runtime.getSetting("ZEROG_INDEXER_RPC_URL"));
+
+                const { gasPrice } = await provider.getFeeData();
+                elizaLogger.info(`current average gasPrice: ${gasPrice}, using: ${BigInt(Math.round(Number(gasPrice) * 10))}`);
 
                 // Upload file to ZeroG
                 elizaLogger.info("Starting file upload to ZeroG", {
                     filePath: sanitizedPath,
                     messageId: message.id
                 });
-                const [txHash, uploadError] = await indexer.upload(
-                    file,
-                    0,
-                    runtime.getSetting("ZEROG_EVM_RPC"),
-                    flowContract
-                );
+                const [txHash, uploadError] = await indexer.upload(file, runtime.getSetting("ZEROG_RPC_URL"), signer, undefined, {
+                    Retries: 3,
+                    Interval: 1000,
+                    MaxGasPrice: Math.round(Number(gasPrice) * 20) ?? undefined
+                }, {
+                    gasPrice: BigInt(Math.round(Number(gasPrice) * 10)) ?? undefined
+                });
 
                 if (uploadError !== null) {
                     const error = `Error uploading file: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
