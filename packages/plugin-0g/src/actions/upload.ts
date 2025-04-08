@@ -18,6 +18,7 @@ import { FileSecurityValidator } from "../utils/security";
 import { logSecurityEvent, monitorUpload, monitorFileValidation, monitorCleanup } from '../utils/monitoring';
 import path from 'path';
 import { uploadTemplate } from "../templates/upload";
+import { z } from 'zod';
 
 export interface UploadContent extends Content {
     filePath: string;
@@ -149,12 +150,17 @@ export const zgUpload: Action = {
 
             // Generate upload content
             elizaLogger.debug("Generating upload content");
-            const content = await generateObject({
+            let content = await generateObject({
                 runtime,
                 context: uploadContext,
                 modelClass: ModelClass.LARGE,
+                schema: z.object({
+                        filePath: z.string(), 
+                        description: z.string(), 
+                    }),
             });
 
+            content = content.object;
             // Validate upload content
             if (!isUploadContent(runtime, content)) {
                 const error = "Invalid content for UPLOAD action";

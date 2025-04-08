@@ -1,4 +1,4 @@
-export const uploadTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+export const uploadTemplate = `Respond with a JSON string containing only the extracted values. Use null for any values that cannot be determined. Only valid JSON tokens should be returned and no markdown token like \`\`\`json or \`\`\` should appear.
 
 Example response:
 \`\`\`json
@@ -19,4 +19,4 @@ Extract the user's intention to upload a file from the conversation. Users might
 
 If the user provides any specific description of the file, include that as well.
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with a JSON string containing only the extracted values. Only valid JSON tokens should be returned and no markdown token like \`\`\`json or \`\`\` should appear.`;
