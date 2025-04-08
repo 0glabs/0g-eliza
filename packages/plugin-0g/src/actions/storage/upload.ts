@@ -148,15 +148,25 @@ export const zgsUpload: Action = {
             }
 
             const provider = new ethers.JsonRpcProvider(zgEvmRpc);
+            const { gasPrice } = await provider.getFeeData();
+            elizaLogger.info(`current average gasPrice: ${gasPrice}, using: ${BigInt(Math.round(Number(gasPrice) * 10))}`);
             const signer = new ethers.Wallet(zgPrivateKey, provider);
             const indexer = new Indexer(zgIndexerRpc);
 
-            var [tx, err] = await indexer.upload(file, zgEvmRpc, signer);
-            if (err === null) {
-                elizaLogger.info("File uploaded successfully, tx:", tx);
-            } else {
-                elizaLogger.error("Error uploading file:", err);
-                throw new Error(`Error uploading file: ${err}`);
+            var [tx, err] = await indexer.upload(file, zgEvmRpc, signer, undefined, {
+                Retries: 3,
+                Interval: 1000,
+                MaxGasPrice: Math.round(Number(gasPrice) * 20) ?? undefined
+            }, {
+                gasPrice: BigInt(Math.round(Number(gasPrice) * 10)) ?? undefined
+            });
+            if (err !== null) {
+                if (err.message.includes("Data already exists")) {
+                    elizaLogger.info("Data already exists in storage network, skipping upload");
+                } else {
+                    elizaLogger.error(`Error indexer uploading file: ${err.message}`);
+                    throw err;
+                }
             }
 
             await file.close();
