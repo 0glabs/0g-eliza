@@ -52,17 +52,10 @@ export const messageHandlerTemplate =
     `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
-# Knowledge
-{{knowledge}}
-
 # Task: Generate dialog and actions for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
 {{lore}}
-
-{{providers}}
-
-{{attachments}}
 
 # Capabilities
 Note that {{agentName}} is capable of reading/seeing/hearing various forms of media, including images, videos, audio, plaintext and PDFs. Recent attachments have been included above under the "Attachments" section.
@@ -70,8 +63,6 @@ Note that {{agentName}} is capable of reading/seeing/hearing various forms of me
 {{messageDirections}}
 
 {{recentMessages}}
-
-{{actions}}
 
 # Instructions: Write the next message for {{agentName}}.
 ` + messageCompletionFooter;
@@ -82,21 +73,16 @@ export const chatHandlerTemplate =
     `{{actionExamples}}
 (Action examples are for reference only. Do not use the information from them in your response.)
 
-# Knowledge
-{{knowledge}}
-
 # Task: Generate dialog for the character {{agentName}}.
 About {{agentName}}:
 {{bio}}
 {{lore}}
 
-{{providers}}
-
 {{messageDirections}}
 
 {{recentMessages}}
 
-# Instructions: Generate the next message as {{agentName}}.
+# Instructions: Generate only the dialog message for {{agentName}} without any prefixes, metadata, or identifiers. Provide a clean text response as {{agentName}}.
 `;
 
 export const hyperfiHandlerTemplate = `{{actionExamples}}
@@ -209,7 +195,6 @@ export class DirectClient {
 
         this.app.post(
             "/:agentId/message",
-            upload.single("file"),
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
                 const roomId = stringToUuid(
@@ -344,7 +329,7 @@ export class DirectClient {
                     }
                 );
 
-                await runtime.evaluate(memory, state);
+                // await runtime.evaluate(memory, state);
 
                 // Check if we should suppress the initial message
                 const action = runtime.actions.find(
@@ -371,7 +356,6 @@ export class DirectClient {
 
         this.app.post(
             "/:agentId/chat",
-            upload.single("file"),
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
                 const roomId = stringToUuid(
