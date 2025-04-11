@@ -987,26 +987,15 @@ export class AgentRuntime implements IAgentRuntime {
 
         const conversationLength = this.getConversationLength();
 
-        const [actorsData, recentMessagesData, goalsData]: [
-            Actor[],
-            Memory[],
-            Goal[],
-        ] = await Promise.all([
-            getActorDetails({ runtime: this, roomId }),
-            this.messageManager.getMemories({
-                roomId,
-                count: conversationLength,
-                unique: false,
-            }),
-            getGoals({
-                runtime: this,
-                count: 10,
-                onlyInProgress: false,
-                roomId,
-            }),
-        ]);
-
-        const goals = formatGoalsAsString({ goals: goalsData });
+        const [actorsData, recentMessagesData]: [Actor[], Memory[]] =
+            await Promise.all([
+                getActorDetails({ runtime: this, roomId }),
+                this.messageManager.getMemories({
+                    roomId,
+                    count: conversationLength,
+                    unique: false,
+                }),
+            ]);
 
         const actors = formatActors({ actors: actorsData ?? [] });
 
@@ -1032,51 +1021,51 @@ export class AgentRuntime implements IAgentRuntime {
             actorsData?.find((actor: Actor) => actor.id === this.agentId)
                 ?.name || this.character.name;
 
-        let allAttachments = message.content.attachments || [];
+        // let allAttachments = message.content.attachments || [];
 
-        if (recentMessagesData && Array.isArray(recentMessagesData)) {
-            const lastMessageWithAttachment = recentMessagesData.find(
-                (msg) =>
-                    msg.content.attachments &&
-                    msg.content.attachments.length > 0
-            );
+        // if (recentMessagesData && Array.isArray(recentMessagesData)) {
+        //     const lastMessageWithAttachment = recentMessagesData.find(
+        //         (msg) =>
+        //             msg.content.attachments &&
+        //             msg.content.attachments.length > 0
+        //     );
 
-            if (lastMessageWithAttachment) {
-                const lastMessageTime =
-                    lastMessageWithAttachment?.createdAt ?? Date.now();
-                const oneHourBeforeLastMessage =
-                    lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
+        //     if (lastMessageWithAttachment) {
+        //         const lastMessageTime =
+        //             lastMessageWithAttachment?.createdAt ?? Date.now();
+        //         const oneHourBeforeLastMessage =
+        //             lastMessageTime - 60 * 60 * 1000; // 1 hour before last message
 
-                allAttachments = recentMessagesData
-                    .reverse()
-                    .map((msg) => {
-                        const msgTime = msg.createdAt ?? Date.now();
-                        const isWithinTime =
-                            msgTime >= oneHourBeforeLastMessage;
-                        const attachments = msg.content.attachments || [];
-                        if (!isWithinTime) {
-                            attachments.forEach((attachment) => {
-                                attachment.text = "[Hidden]";
-                            });
-                        }
-                        return attachments;
-                    })
-                    .flat();
-            }
-        }
+        //         allAttachments = recentMessagesData
+        //             .reverse()
+        //             .map((msg) => {
+        //                 const msgTime = msg.createdAt ?? Date.now();
+        //                 const isWithinTime =
+        //                     msgTime >= oneHourBeforeLastMessage;
+        //                 const attachments = msg.content.attachments || [];
+        //                 if (!isWithinTime) {
+        //                     attachments.forEach((attachment) => {
+        //                         attachment.text = "[Hidden]";
+        //                     });
+        //                 }
+        //                 return attachments;
+        //             })
+        //             .flat();
+        //     }
+        // }
 
-        const formattedAttachments = allAttachments
-            .map(
-                (attachment) =>
-                    `ID: ${attachment.id}
-Name: ${attachment.title}
-URL: ${attachment.url}
-Type: ${attachment.source}
-Description: ${attachment.description}
-Text: ${attachment.text}
-  `
-            )
-            .join("\n");
+//         const formattedAttachments = allAttachments
+//             .map(
+//                 (attachment) =>
+//                     `ID: ${attachment.id}
+// Name: ${attachment.title}
+// URL: ${attachment.url}
+// Type: ${attachment.source}
+// Description: ${attachment.description}
+// Text: ${attachment.text}
+//   `
+//             )
+//             .join("\n");
 
         // randomly get 3 bits of lore and join them into a paragraph, divided by \n
         let lore = "";
@@ -1200,27 +1189,27 @@ Text: ${attachment.text}
                 .join(" ");
         }
 
-        let knowledgeData = [];
-        let formattedKnowledge = "";
+        // let knowledgeData = [];
+        // let formattedKnowledge = "";
 
-        if (this.character.settings?.ragKnowledge) {
-            const recentContext = recentMessagesData
-                .slice(-3) // Last 3 messages
-                .map((msg) => msg.content.text)
-                .join(" ");
+        // if (this.character.settings?.ragKnowledge) {
+        //     const recentContext = recentMessagesData
+        //         .slice(-3) // Last 3 messages
+        //         .map((msg) => msg.content.text)
+        //         .join(" ");
 
-            knowledgeData = await this.ragKnowledgeManager.getKnowledge({
-                query: message.content.text,
-                conversationContext: recentContext,
-                limit: 5,
-            });
+        //     knowledgeData = await this.ragKnowledgeManager.getKnowledge({
+        //         query: message.content.text,
+        //         conversationContext: recentContext,
+        //         limit: 5,
+        //     });
 
-            formattedKnowledge = formatKnowledge(knowledgeData);
-        } else {
-            knowledgeData = await knowledge.get(this, message);
+        //     formattedKnowledge = formatKnowledge(knowledgeData);
+        // } else {
+        //     knowledgeData = await knowledge.get(this, message);
 
-            formattedKnowledge = formatKnowledge(knowledgeData);
-        }
+        //     formattedKnowledge = formatKnowledge(knowledgeData);
+        // }
 
         const initialState = {
             agentId: this.agentId,
@@ -1236,9 +1225,9 @@ Text: ${attachment.text}
                           )
                       ]
                     : "",
-            knowledge: formattedKnowledge,
-            knowledgeData: knowledgeData,
-            ragKnowledgeData: knowledgeData,
+            // knowledge: formattedKnowledge,
+            // knowledgeData: knowledgeData,
+            // ragKnowledgeData: knowledgeData,
             // Recent interactions between the sender and receiver, formatted as messages
             recentMessageInteractions: formattedMessageInteractions,
             // Recent interactions between the sender and receiver, formatted as posts
@@ -1343,14 +1332,6 @@ Text: ${attachment.text}
                     : "",
             actorsData,
             roomId,
-            goals:
-                goals && goals.length > 0
-                    ? addHeader(
-                          "# Goals\n{{agentName}} should prioritize accomplishing the objectives that are in progress.",
-                          goals
-                      )
-                    : "",
-            goalsData,
             recentMessages:
                 recentMessages && recentMessages.length > 0
                     ? addHeader("# Conversation Messages", recentMessages)
@@ -1360,82 +1341,83 @@ Text: ${attachment.text}
                     ? addHeader("# Posts in Thread", recentPosts)
                     : "",
             recentMessagesData,
-            attachments:
-                formattedAttachments && formattedAttachments.length > 0
-                    ? addHeader("# Attachments", formattedAttachments)
-                    : "",
+            // attachments:
+            //     formattedAttachments && formattedAttachments.length > 0
+            //         ? addHeader("# Attachments", formattedAttachments)
+            //         : "",
             ...additionalKeys,
         } as State;
 
-        const actionPromises = this.actions.map(async (action: Action) => {
-            const result = await action.validate(this, message, initialState);
-            if (result) {
-                return action;
-            }
-            return null;
-        });
+        // const actionPromises = this.actions.map(async (action: Action) => {
+        //     const result = await action.validate(this, message, initialState);
+        //     if (result) {
+        //         return action;
+        //     }
+        //     return null;
+        // });
 
-        const evaluatorPromises = this.evaluators.map(async (evaluator) => {
-            const result = await evaluator.validate(
-                this,
-                message,
-                initialState
-            );
-            if (result) {
-                return evaluator;
-            }
-            return null;
-        });
+        // const evaluatorPromises = this.evaluators.map(async (evaluator) => {
+        //     const result = await evaluator.validate(
+        //         this,
+        //         message,
+        //         initialState
+        //     );
+        //     if (result) {
+        //         return evaluator;
+        //     }
+        //     return null;
+        // });
 
-        const [resolvedEvaluators, resolvedActions, providers] =
-            await Promise.all([
-                Promise.all(evaluatorPromises),
-                Promise.all(actionPromises),
-                getProviders(this, message, initialState),
-            ]);
+        // const [resolvedEvaluators, resolvedActions, providers] =
+        //     await Promise.all([
+        //         Promise.all(evaluatorPromises),
+        //         Promise.all(actionPromises),
+        //         getProviders(this, message, initialState),
+        //     ]);
 
-        const evaluatorsData = resolvedEvaluators.filter(
-            Boolean
-        ) as Evaluator[];
-        const actionsData = resolvedActions.filter(Boolean) as Action[];
+        // const evaluatorsData = resolvedEvaluators.filter(
+        //     Boolean
+        // ) as Evaluator[];
+        // const actionsData = resolvedActions.filter(Boolean) as Action[];
 
-        const actionState = {
-            actionNames:
-                "Possible response actions: " + formatActionNames(actionsData),
-            actions:
-                actionsData.length > 0
-                    ? addHeader(
-                          "# Available Actions",
-                          formatActions(actionsData)
-                      )
-                    : "",
-            actionExamples:
-                actionsData.length > 0
-                    ? addHeader(
-                          "# Action Examples",
-                          composeActionExamples(actionsData, 10)
-                      )
-                    : "",
-            evaluatorsData,
-            evaluators:
-                evaluatorsData.length > 0
-                    ? formatEvaluators(evaluatorsData)
-                    : "",
-            evaluatorNames:
-                evaluatorsData.length > 0
-                    ? formatEvaluatorNames(evaluatorsData)
-                    : "",
-            evaluatorExamples:
-                evaluatorsData.length > 0
-                    ? formatEvaluatorExamples(evaluatorsData)
-                    : "",
-            providers: addHeader(
-                `# Additional Information About ${this.character.name} and The World`,
-                providers
-            ),
-        };
+        // const actionState = {
+        //     actionNames:
+        //         "Possible response actions: " + formatActionNames(actionsData),
+        //     actions:
+        //         actionsData.length > 0
+        //             ? addHeader(
+        //                   "# Available Actions",
+        //                   formatActions(actionsData)
+        //               )
+        //             : "",
+        //     actionExamples:
+        //         actionsData.length > 0
+        //             ? addHeader(
+        //                   "# Action Examples",
+        //                   composeActionExamples(actionsData, 10)
+        //               )
+        //             : "",
+        //     evaluatorsData,
+        //     evaluators:
+        //         evaluatorsData.length > 0
+        //             ? formatEvaluators(evaluatorsData)
+        //             : "",
+        //     evaluatorNames:
+        //         evaluatorsData.length > 0
+        //             ? formatEvaluatorNames(evaluatorsData)
+        //             : "",
+        //     evaluatorExamples:
+        //         evaluatorsData.length > 0
+        //             ? formatEvaluatorExamples(evaluatorsData)
+        //             : "",
+        //     providers: addHeader(
+        //         `# Additional Information About ${this.character.name} and The World`,
+        //         providers
+        //     ),
+        // };
 
-        return { ...initialState, ...actionState } as State;
+        // return { ...initialState, ...actionState } as State;
+        return { ...initialState } as State;
     }
 
     async updateRecentMessageState(state: State): Promise<State> {
