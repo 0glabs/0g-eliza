@@ -106,6 +106,80 @@ export function createApiRouter(
         });
     });
 
+    router.post("/agents", async (req, res) => {
+        elizaLogger.info(`New agent with tokenId: ${req.body.tokenId} start`);
+        let { tokenId, character } = req.body;
+        if (character) {
+            // character is provided
+            try {
+                validateCharacterConfig(character);
+            } catch (e) {
+                elizaLogger.error(`Error parsing character: ${e}`);
+                res.status(400).json({
+                    success: false,
+                    message: e.message,
+                });
+                return;
+            }
+        } else if (tokenId) {
+            // get character from tokenId
+            const agentNFTClient = new AgentNFTClient();
+            const name = await agentNFTClient.getNFTName();
+            elizaLogger.info(`NFT name: ${name}`);
+            const symbol = await agentNFTClient.getNFTSymbol();
+            elizaLogger.info(`NFT symbol: ${symbol}`);
+            const { rpcURL, indexerURL } =
+                await agentNFTClient.getTokenURI(tokenId);
+            elizaLogger.info(`Rpc URL: ${rpcURL}`);
+            elizaLogger.info(`Indexer URL: ${indexerURL}`);
+
+            elizaLogger.info(
+                `Fetching data for token[${tokenId}] from ${indexerURL}...`
+            );
+            const tokenData = await agentNFTClient.getTokenData(tokenId);
+            elizaLogger.info(`tokenData: ${JSON.stringify(tokenData)}`);
+
+            elizaLogger.info("Downloading and saving token data...");
+            const agentMetadata = await agentNFTClient.downloadAndSaveData(
+                tokenId,
+                tokenData.dataHashes,
+                tokenData.dataDescriptions
+            );
+            elizaLogger.info("agentMetadata", agentMetadata);
+            process.env.SQLITE_FILE = agentMetadata.memory;
+
+            character = await fs.readFile(agentMetadata.character, "utf-8");
+            character = JSON.parse(character);
+            elizaLogger.info(`character: ${character}`);
+
+            try {
+                validateCharacterConfig(character);
+            } catch (e) {
+                elizaLogger.error(`Error parsing character: ${e}`);
+                res.status(400).json({
+                    success: false,
+                    message: e.message,
+                });
+                return;
+            }
+        } else {
+            res.status(400).json({
+                success: false,
+                message: "No character or tokenId and proof provided",
+            });
+            return;
+        }
+
+        // start it up (and register it)
+        await directClient.startAgent(character);
+        elizaLogger.log(`${character.name} started`);
+
+        res.json({
+            id: character.id,
+            character: character,
+        });
+    });
+
     router.post("/agents/:agentId/set", async (req, res) => {
         elizaLogger.info(`Reset agent start`);
         const { agentId } = validateUUIDParams(req.params, res) ?? {
