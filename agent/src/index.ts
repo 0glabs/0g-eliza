@@ -14,7 +14,7 @@ export const startAgents = async () => {
     let serverPort = parseInt(settings.SERVER_PORT || "3000");
     const args = parseArguments();
     let charactersArg = args.characters || args.character;
-    let characters = [defaultCharacter];
+    let characters = [];
 
     try {
         if (charactersArg) {
@@ -27,7 +27,7 @@ export const startAgents = async () => {
         } else {
             // load from default character
             elizaLogger.info("Starting with default character...");
-            characters = [defaultCharacter];
+            characters = [];
         }
 
         // Find available port
