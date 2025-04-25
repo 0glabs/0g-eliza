@@ -12,9 +12,6 @@ importers:
 
   .:
     dependencies:
-      '@0glabs/0g-ts-sdk':
-        specifier: 0.2.1
-        version: 0.2.1(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@coinbase/coinbase-sdk':
         specifier: 0.10.0
         version: 0.10.0(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@6.0.5)(zod@3.24.2)
@@ -113,8 +110,8 @@ importers:
   agent:
     dependencies:
       '@0glabs/0g-ts-sdk':
-        specifier: 0.2.8
-        version: 0.2.8(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
+        specifier: 0.3.0
+        version: 0.3.0(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@elizaos/adapter-pglite':
         specifier: workspace:*
         version: link:../packages/adapter-pglite
@@ -744,8 +741,8 @@ importers:
   packages/client-direct:
     dependencies:
       '@0glabs/0g-ts-sdk':
-        specifier: 0.2.8
-        version: 0.2.8(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
+        specifier: 0.3.0
+        version: 0.3.0(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
@@ -1210,20 +1207,17 @@ importers:
   packages/plugin-0g:
     dependencies:
       '@0glabs/0g-ts-sdk':
-        specifier: 0.2.8
-        version: 0.2.8(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
+        specifier: 0.3.0
+        version: 0.3.0(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)
       '@elizaos/core':
         specifier: workspace:*
         version: link:../core
       ethers:
-        specifier: 6.13.4
-        version: 6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+        specifier: 6.13.1
+        version: 6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       tsup:
         specifier: 8.3.5
         version: 8.3.5(@swc/core@1.10.7(@swc/helpers@0.5.15))(jiti@2.4.2)(postcss@8.5.0)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
-      zod:
-        specifier: ^3.24.2
-        version: 3.24.2
 
   packages/plugin-3d-generation:
     dependencies:
@@ -2956,13 +2950,8 @@ packages:
       crypto-js: ^4.2.0
       ethers: 6.13.1
 
-  '@0glabs/0g-ts-sdk@0.2.1':
-    resolution: {integrity: sha512-IJRD3D+5flNZIl32k/7D45yYvn9AjMeDdkhMr4Y/qo6nFE40HqYRaSlk6ZNI+MjaRzbDxMErrFzQcVkYH/DARg==}
-    peerDependencies:
-      ethers: 6.13.1
-
-  '@0glabs/0g-ts-sdk@0.2.8':
-    resolution: {integrity: sha512-FuZBhaAMUPkQPCPOThQGvoCus9zBoPiuipYStVrnLSCkgGSn6gHUd3fqeHcJRknMOq1k5tLETEZaAkvkV5pJTg==}
+  '@0glabs/0g-ts-sdk@0.3.0':
+    resolution: {integrity: sha512-FGAAmPFGAoJAGZ04Z55HgzX5fIv08Sez2xZRLryDgoLdXdjrXdfweNanLU8YzBgckYQ2EbvLBqPReFXuSaJvEg==}
     peerDependencies:
       ethers: 6.13.1
 
@@ -22801,19 +22790,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@0glabs/0g-ts-sdk@0.2.1(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
-    dependencies:
-      '@ethersproject/bytes': 5.7.0
-      '@ethersproject/keccak256': 5.7.0
-      ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
-      open-jsonrpc-provider: 0.2.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-
-  '@0glabs/0g-ts-sdk@0.2.8(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
+  '@0glabs/0g-ts-sdk@0.3.0(bufferutil@4.0.9)(ethers@6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
     dependencies:
       '@ethersproject/bytes': 5.7.0
       '@ethersproject/keccak256': 5.7.0
@@ -22825,7 +22802,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@0glabs/0g-ts-sdk@0.2.8(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
+  '@0glabs/0g-ts-sdk@0.3.0(bufferutil@4.0.9)(ethers@6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5))(utf-8-validate@6.0.5)':
     dependencies:
       '@ethersproject/bytes': 5.7.0
       '@ethersproject/keccak256': 5.7.0
@@ -25034,7 +25011,7 @@ snapshots:
       bip39: 3.1.0
       decimal.js: 10.4.3
       dotenv: 16.4.7
-      ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      ethers: 6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       node-jose: 2.2.0
       secp256k1: 5.0.1
       viem: 2.21.58(bufferutil@4.0.9)(typescript@5.6.3)(utf-8-validate@6.0.5)(zod@3.24.2)
@@ -33278,7 +33255,7 @@ snapshots:
   '@spheron/protocol-sdk@1.2.3(bufferutil@4.0.9)(utf-8-validate@6.0.5)':
     dependencies:
       base64-js: 1.5.1
-      ethers: 6.13.4(bufferutil@4.0.9)(utf-8-validate@6.0.5)
+      ethers: 6.13.1(bufferutil@4.0.9)(utf-8-validate@6.0.5)
       js-yaml: 4.1.0
     transitivePeerDependencies:
       - bufferutil

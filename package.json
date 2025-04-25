@@ -59,7 +59,6 @@
         "node": "23.3.0"
     },
     "dependencies": {
-        "@0glabs/0g-ts-sdk": "0.2.1",
         "@coinbase/coinbase-sdk": "0.10.0",
         "@deepgram/sdk": "^3.9.0",
         "@vitest/eslint-plugin": "1.0.1",

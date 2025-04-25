@@ -11,7 +11,7 @@ import {
     elizaLogger,
 } from "@elizaos/core";
 import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
-import { ethers } from "ethers";
+import { ethers, Wallet, JsonRpcProvider } from "ethers";
 import { composeContext } from "@elizaos/core";
 import { promises as fs } from "fs";
 import { FileSecurityValidator } from "../utils/security";
@@ -23,13 +23,18 @@ export interface UploadContent extends Content {
     filePath: string;
 }
 
-function isUploadContent(
-    _runtime: IAgentRuntime,
-    content: any
-): content is UploadContent {
-    elizaLogger.debug("Validating upload content", { content });
-    return typeof content.filePath === "string";
-}
+const UploadSchema = z.object({
+    filePath: z.string(),
+    description: z.string(),
+});
+
+export const isUploadContent = (object: any): object is UploadContent => {
+    if (UploadSchema.safeParse(object).success) {
+        return true;
+    }
+    console.error("Invalid content: ", object);
+    return false;
+};
 
 export const zgUpload: Action = {
     name: "ZG_UPLOAD",
@@ -151,15 +156,11 @@ export const zgUpload: Action = {
                 runtime,
                 context: uploadContext,
                 modelClass: ModelClass.LARGE,
-                schema: z.object({
-                        filePath: z.string(),
-                        description: z.string(),
-                    }),
+                schema: UploadSchema,
             });
 
-            content = content.object;
             // Validate upload content
-            if (!isUploadContent(runtime, content)) {
+            if (!isUploadContent(content.object)) {
                 const error = "Invalid content for UPLOAD action";
                 elizaLogger.error(error, {
                     content,
@@ -174,7 +175,7 @@ export const zgUpload: Action = {
                 return false;
             }
 
-            const filePath = content.filePath;
+            const filePath = content.object.filePath;
             elizaLogger.debug("Extracted file path", { filePath, content });
 
             if (!filePath) {
@@ -366,8 +367,8 @@ export const zgUpload: Action = {
 
                 // Initialize blockchain connection
                 elizaLogger.debug("Initializing blockchain connection");
-                const provider = new ethers.JsonRpcProvider(runtime.getSetting("ZEROG_RPC_URL"));
-                const signer = new ethers.Wallet(runtime.getSetting("ZEROG_PRIVATE_KEY"), provider);
+                const provider = new JsonRpcProvider(runtime.getSetting("ZEROG_RPC_URL"));
+                const signer = new Wallet(runtime.getSetting("ZEROG_PRIVATE_KEY"), provider);
                 const indexer = new Indexer(runtime.getSetting("ZEROG_INDEXER_RPC_URL"));
 
                 const { gasPrice } = await provider.getFeeData();
