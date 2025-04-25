@@ -9,15 +9,17 @@ import {
     ActionExample,
     generateObject,
     elizaLogger,
+    ModelProviderName
 } from "@elizaos/core";
 import { Indexer, ZgFile } from "@0glabs/0g-ts-sdk";
-import { ethers, Wallet, JsonRpcProvider } from "ethers";
+import { Wallet, JsonRpcProvider } from "ethers";
 import { composeContext } from "@elizaos/core";
 import { promises as fs } from "fs";
 import { FileSecurityValidator } from "../utils/security";
 import { logSecurityEvent, monitorUpload, monitorFileValidation, monitorCleanup } from '../utils/monitoring';
 import { uploadTemplate } from "../templates/upload";
 import { z } from 'zod';
+
 
 export interface UploadContent extends Content {
     filePath: string;
@@ -158,9 +160,14 @@ export const zgUpload: Action = {
                 modelClass: ModelClass.LARGE,
                 schema: UploadSchema,
             });
-
+            let object;
             // Validate upload content
-            if (!isUploadContent(content.object)) {
+            if (runtime.modelProvider !== ModelProviderName.ZERO_G) {
+                object = content.object;
+            } else {
+                object = content;
+            }
+            if (!isUploadContent(object)) {
                 const error = "Invalid content for UPLOAD action";
                 elizaLogger.error(error, {
                     content,
@@ -175,7 +182,7 @@ export const zgUpload: Action = {
                 return false;
             }
 
-            const filePath = content.object.filePath;
+            const filePath = object.filePath;
             elizaLogger.debug("Extracted file path", { filePath, content });
 
             if (!filePath) {

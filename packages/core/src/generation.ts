@@ -2138,6 +2138,7 @@ export async function handleProvider(
                 context,
                 modelClass,
             });
+            // return await handleZGC(options);
         case ModelProviderName.ZEROG_ROUTER:
             return await generateObjectDeprecated({
                 runtime,
@@ -2431,6 +2432,102 @@ async function handleDeepSeek({
     });
 }
 
+async function handleZGC({
+    model,
+    apiKey,
+    schema,
+    schemaName,
+    schemaDescription,
+    mode,
+    modelOptions,
+}: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
+    const provider = new JsonRpcProvider(settings.ZEROG_RPC_URL);
+    const wallet = new Wallet(settings.ZEROG_PRIVATE_KEY, provider);
+    const broker = await createZGComputeNetworkBroker(wallet);
+
+    const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
+    let endpoint;
+    if (!models.zero_g.endpoint) {
+        let modelInfo = await broker.inference.getServiceMetadata(zgc_provider);
+        endpoint = modelInfo.endpoint;
+        model = modelInfo.model;
+    }
+
+    elizaLogger.info("zgc_endpoint", endpoint);
+    elizaLogger.info("zgc_model", model);
+
+    elizaLogger.debug("context", context);
+
+    const headers = await broker.inference.getRequestHeaders(
+        zgc_provider,
+        context
+    );
+    elizaLogger.debug("headers", headers);
+
+    const openai = createOpenAI({ apiKey, baseURL: endpoint, headers });
+    let response = await aiGenerateObject({
+        model: openai.languageModel(model),
+        schema,
+        schemaName,
+        schemaDescription,
+        mode,
+        ...modelOptions,
+    });
+
+    const jsonResponse = response.toJsonResponse();
+    let jsonResult = await JSON.parse(await jsonResponse.text());
+    if (!jsonResponse.ok) {
+        const errorText = jsonResult;
+        elizaLogger.error("Network error calling service on ZGC:", {
+            status: jsonResponse.status,
+            statusText: jsonResponse.statusText,
+            errorText,
+        });
+
+        // check if error is due to insufficient balance
+        const feeMatch = errorText.match(/expected ([\d.e-]+) A0GI/);
+        if (feeMatch && feeMatch[1]) {
+            const fee = parseFloat(feeMatch[1]);
+            elizaLogger.info(
+                `Retrying after calling settleFee with fee: ${fee} A0GI`
+            );
+
+            // call settleFee and retry
+            await broker.inference.settleFee(zgc_provider, fee);
+            return await aiGenerateObject({
+                model: openai.languageModel(model),
+                schema,
+                schemaName,
+                schemaDescription,
+                mode,
+            });
+        }
+    }
+
+    const innerResponse = jsonResult.choices[0]?.message?.content;
+    const chatID = jsonResult.id;
+    if (!innerResponse) {
+        elizaLogger.error("No output received from ZGC.");
+        throw new Error("No output received from ZGC.");
+    }
+    try {
+        const isValid = await broker.inference.processResponse(
+            zgc_provider,
+            innerResponse,
+            chatID
+        );
+        // if (!isValid) {
+        //     elizaLogger.error("Invalid response received from ZGC.");
+        //     return "Invalid response";
+        // }
+    } catch (error) {
+        elizaLogger.error("Error in processResponse:", error);
+        throw new Error("Error in processResponse: " + error.message);
+    }
+
+    return response;
+}
+
 // 0G: call service on ZeroG compute network to generate object
 async function ZgcGenerateObject(
     endpoint: string,
@@ -2438,15 +2535,10 @@ async function ZgcGenerateObject(
     context: string
 ): Promise<string> {
     try {
-        const wallet = new JsonRpcProvider(settings.ZEROG_RPC_URL);
-        const signer = new Wallet(settings.ZEROG_PRIVATE_KEY, wallet);
-        const broker = await createZGComputeNetworkBroker(
-            signer,
-            undefined,
-            undefined,
-            undefined,
-            12000000000
-        );
+        const provider = new JsonRpcProvider(settings.ZEROG_RPC_URL);
+        const wallet = new Wallet(settings.ZEROG_PRIVATE_KEY, provider);
+        const broker = await createZGComputeNetworkBroker(wallet);
+
         const zgc_provider = settings.ZEROG_COMPUTE_PROVIDER_ADDRESS;
 
         if (!endpoint || !model) {
@@ -2471,7 +2563,6 @@ async function ZgcGenerateObject(
                 headers: {
                     "Content-Type": "application/json",
                     ...headers,
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
                 },
                 body: JSON.stringify({
                     messages: [{ role: "system", content: context }],
@@ -2537,10 +2628,10 @@ async function ZgcGenerateObject(
                 response,
                 chatID
             );
-            if (!isValid) {
-                elizaLogger.error("Invalid response received from ZGC.");
-                return "Invalid response";
-            }
+            // if (!isValid) {
+            //     elizaLogger.error("Invalid response received from ZGC.");
+            //     return "Invalid response";
+            // }
         } catch (error) {
             elizaLogger.error("Error in processResponse:", error);
             return "Error in processResponse: " + error.message;
